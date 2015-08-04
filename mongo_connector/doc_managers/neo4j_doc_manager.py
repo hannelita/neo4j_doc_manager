@@ -40,8 +40,9 @@ class DocManager(DocManagerBase):
   communicates with Neo4j Server.
   """
 
-  def __init__(self, url, **kwargs):
-    logging.info('Init AAAA')
+  def __init__(self, url, auto_commit_interval=DEFAULT_COMMIT_INTERVAL,
+                 unique_key='_id', chunk_size=DEFAULT_MAX_BULK, **kwargs):
+    LOG.debug('Init AAAA')
     self.remote_graph = Graph(url,
     **kwargs.get('clientOptions', {}))
   
@@ -79,8 +80,3 @@ class DocManager(DocManagerBase):
       """Helper method for getting the index and type from a namespace."""
       index, doc_type = namespace.split('.', 1)
       return index.lower(), doc_type
-
-
-
-
-    
