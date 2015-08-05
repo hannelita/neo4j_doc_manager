@@ -4,19 +4,14 @@ communicates with Neo4j Server.
 """
 import base64
 import logging
-import os
-import sys
-# sys.path.append(os.path.join(os.path.dirname(file), '..', 'mongo_connector'))
-import mongo_connector.doc_managers as doc_manager
-import os.path as path, sys
 
-# sys.stdout.write(path.join(path.dirname(doc_manager.__file__),'neo4j_doc_manager.py'))
+import os.path as path, sys
 
 from threading import Timer
 
 import bson.json_util
 
-from py2neo import Graph
+from py2neo import Graph, Node, Relationship, watch
 
 from mongo_connector import errors
 from mongo_connector.compat import u
@@ -26,11 +21,6 @@ from mongo_connector.util import exception_wrapper, retry_until_ok
 from mongo_connector.doc_managers.doc_manager_base import DocManagerBase
 from mongo_connector.doc_managers.formatters import DefaultDocumentFormatter
 
-# wrap_exceptions = exception_wrapper({
-#     es_exceptions.ConnectionError: errors.ConnectionFailed,
-#     es_exceptions.TransportError: errors.OperationFailed,
-#     es_exceptions.NotFoundError: errors.OperationFailed,
-#     es_exceptions.RequestError: errors.OperationFailed})
 
 LOG = logging.getLogger(__name__)
 
@@ -42,9 +32,13 @@ class DocManager(DocManagerBase):
 
   def __init__(self, url, auto_commit_interval=DEFAULT_COMMIT_INTERVAL,
                  unique_key='_id', chunk_size=DEFAULT_MAX_BULK, **kwargs):
-    LOG.debug('Init AAAA')
-    self.remote_graph = Graph(url,
-    **kwargs.get('clientOptions', {}))
+    self.remote_graph = Graph(url, **kwargs.get('clientOptions', {}))
+    graph = Graph()
+    self.auto_commit_interval = auto_commit_interval
+    self.unique_key = unique_key
+    self.chunk_size = chunk_size
+    if self.auto_commit_interval not in [None, 0]:
+      self.run_auto_commit()
   
   def stop(self):
     """Stop the auto-commit thread."""
@@ -53,30 +47,39 @@ class DocManager(DocManagerBase):
   def upsert(self, doc, namespace, timestamp):
     """Inserts a document into Neo4j."""
     index, doc_type = self._index_and_mapping(namespace)
+    # No need to duplicate '_id' in source document
+    doc_id = u(doc.pop("_id"))
+    metadata = {
+        "ns": namespace,
+        "_ts": timestamp
+    }
   
   def bulk_upsert(self, docs, namespace, timestamp):
     """Insert multiple documents into Neo4j."""
+    LOG.error("Bulk")
 
   def update(self, document_id, update_spec, namespace, timestamp):
-    return
+    LOG.error("Update")
 
   def remove(self, document_id, namespace, timestamp):
-    return
+    LOG.error("remove")
 
   def search(self, start_ts, end_ts):
-    return
+    LOG.error("Search")
 
   def commit(self):
-    return
+    LOG.error("Commit")
+    
 
   def get_last_doc(self):
-    return
+    LOG.error("get last doc")
+    
 
   def handle_command(self, doc, namespace, timestamp):
-    return
+    db = namespace.split('.', 1)[0]
 
 
   def _index_and_mapping(self, namespace):
-      """Helper method for getting the index and type from a namespace."""
-      index, doc_type = namespace.split('.', 1)
-      return index.lower(), doc_type
+    """Helper method for getting the index and type from a namespace."""
+    index, doc_type = namespace.split('.', 1)
+    return index.lower(), doc_type
