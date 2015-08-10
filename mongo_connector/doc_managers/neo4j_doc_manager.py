@@ -7,11 +7,9 @@ import logging
 
 import os.path as path, sys
 
-from threading import Timer
-
 import bson.json_util
 
-from py2neo import Graph, Node, Relationship, watch
+from py2neo import Graph, authenticate
 
 from mongo_connector import errors
 from mongo_connector.compat import u
@@ -33,13 +31,14 @@ class DocManager(DocManagerBase):
   def __init__(self, url, auto_commit_interval=DEFAULT_COMMIT_INTERVAL,
                  unique_key='_id', chunk_size=DEFAULT_MAX_BULK, **kwargs):
     self.remote_graph = Graph(url, **kwargs.get('clientOptions', {}))
-    graph = Graph()
+    self.graph = Graph()
     self.auto_commit_interval = auto_commit_interval
     self.unique_key = unique_key
     self.chunk_size = chunk_size
     if self.auto_commit_interval not in [None, 0]:
       self.run_auto_commit()
-  
+    self._formatter = DefaultDocumentFormatter()
+
   def stop(self):
     """Stop the auto-commit thread."""
     self.auto_commit_interval = None
@@ -53,7 +52,26 @@ class DocManager(DocManagerBase):
         "ns": namespace,
         "_ts": timestamp
     }
+    doc = self._formatter.format_document(doc)
+    self.store_nodes_and_relationships(doc, doc_type, doc_id)
+    
   
+  def store_nodes_and_relationships(self, doc, doc_type, doc_id):
+    tx = self.graph.cypher.begin()
+    parameters = {'id':doc_id}
+    for key in doc.keys():
+      LOG.error(type(doc[key]))
+      if (type(doc[key]) is str):
+        value = doc[key]
+      else:
+        value = ""
+      parameters.update({ key: value })
+    parameters = ', '.join("{!s}:{!r}".format(k,v) for (k,v) in parameters.items())
+    query = "CREATE (c:Document:{doc_type} {{ {parameters} }}) RETURN c".format(doc_type=doc_type, parameters=parameters)
+    tx.append(query)
+    LOG.error(query)
+    tx.commit()
+
   def bulk_upsert(self, docs, namespace, timestamp):
     """Insert multiple documents into Neo4j."""
     LOG.error("Bulk")
