@@ -60,16 +60,13 @@ class DocManager(DocManagerBase):
     tx = self.graph.cypher.begin()
     parameters = {'id':doc_id}
     for key in doc.keys():
-      LOG.error(type(doc[key]))
       if (type(doc[key]) is str):
         value = doc[key]
       else:
         value = ""
       parameters.update({ key: value })
-    parameters = ', '.join("{!s}:{!r}".format(k,v) for (k,v) in parameters.items())
-    query = "CREATE (c:Document:{doc_type} {{ {parameters} }}) RETURN c".format(doc_type=doc_type, parameters=parameters)
-    tx.append(query)
-    LOG.error(query)
+    query = "CREATE (c:Document:{doc_type} {{parameters}})".format(doc_type=doc_type)
+    tx.append(query, {"parameters":parameters})
     tx.commit()
 
   def bulk_upsert(self, docs, namespace, timestamp):
