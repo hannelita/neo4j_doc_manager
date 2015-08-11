@@ -38,6 +38,7 @@ class DocManager(DocManagerBase):
     if self.auto_commit_interval not in [None, 0]:
       self.run_auto_commit()
     self._formatter = DefaultDocumentFormatter()
+    self.query_nodes = {}
 
   def stop(self):
     """Stop the auto-commit thread."""
@@ -58,16 +59,21 @@ class DocManager(DocManagerBase):
   
   def store_nodes_and_relationships(self, doc, doc_type, doc_id):
     tx = self.graph.cypher.begin()
-    parameters = {'id':doc_id}
-    for key in doc.keys():
-      if (type(doc[key]) is str):
-        value = doc[key]
-      else:
-        value = ""
-      parameters.update({ key: value })
-    query = "CREATE (c:Document:{doc_type} {{parameters}})".format(doc_type=doc_type)
-    tx.append(query, {"parameters":parameters})
+    self.build_nodes(doc_type, doc, doc_id)
+    for query in self.query_nodes.keys():
+      tx.append(query, {"parameters":self.query_nodes[query]})
     tx.commit()
+
+  def build_nodes(self, doc_type, hash, id):
+    parameters = {'id':id}
+    for key in hash.keys():
+      if (type(hash[key]) is str) or (type(hash[key]) is list):
+        value = hash[key]
+        parameters.update({ key: value })
+      else:
+        self.build_nodes(key, hash[key], id)
+    query = "CREATE (c:Document:{doc_type} {{parameters}})".format(doc_type=doc_type)
+    self.query_nodes.update({query: parameters})
 
   def bulk_upsert(self, docs, namespace, timestamp):
     """Insert multiple documents into Neo4j."""
