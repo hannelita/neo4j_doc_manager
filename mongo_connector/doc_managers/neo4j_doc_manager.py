@@ -39,6 +39,7 @@ class DocManager(DocManagerBase):
       self.run_auto_commit()
     self._formatter = DefaultDocumentFormatter()
     self.query_nodes = {}
+    self.doc_types = []
 
   def stop(self):
     """Stop the auto-commit thread."""
@@ -62,9 +63,13 @@ class DocManager(DocManagerBase):
     self.build_nodes(doc_type, doc, doc_id)
     for query in self.query_nodes.keys():
       tx.append(query, {"parameters":self.query_nodes[query]})
+    main_type = self.doc_types.pop(0)
+    for node_type in self.doc_types:
+      tx.append(self.build_relationships(doc_id, main_type, node_type))
     tx.commit()
 
   def build_nodes(self, doc_type, hash, id):
+    self.doc_types.append(doc_type)
     parameters = {'id':id}
     for key in hash.keys():
       if (type(hash[key]) is str) or (type(hash[key]) is list):
@@ -74,6 +79,12 @@ class DocManager(DocManagerBase):
         self.build_nodes(key, hash[key], id)
     query = "CREATE (c:Document:{doc_type} {{parameters}})".format(doc_type=doc_type)
     self.query_nodes.update({query: parameters})
+
+    #CREATE (c:Document:{doc_type} {{parameters}})-[:TALKS_SESSION]->(c:Document:{doc_type} {{parameters}})
+  def build_relationships(self, doc_id, main_type, node_type):
+    relationship_type = main_type + "_" + node_type
+    statement = "MATCH (a:{main_type}), (b:{node_type}) WHERE a.id = '{doc_id}' AND b.id = '{doc_id}' CREATE (a)-[r:{relationship_type}]->(b)".format(main_type=main_type, node_type=node_type, doc_id=doc_id, relationship_type=relationship_type)
+    return statement
 
   def bulk_upsert(self, docs, namespace, timestamp):
     """Insert multiple documents into Neo4j."""
