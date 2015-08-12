@@ -24,7 +24,7 @@ coverage.xml
 # Django stuff:
 *.log*
 
-*.timestamp
+*.timestamp*
 
 # PyBuilder
 target/
