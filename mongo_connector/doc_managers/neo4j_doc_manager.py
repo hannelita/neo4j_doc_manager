@@ -41,6 +41,10 @@ class DocManager(DocManagerBase):
     self.query_nodes = {}
     self.doc_types = []
 
+  def apply_id_constraint(self, doc_type):
+    constraint = "CREATE CONSTRAINT ON (d:{doc_type}) ASSERT d.id IS UNIQUE".format(doc_type=doc_type)
+    self.graph.cypher.execute(constraint)
+
   def stop(self):
     """Stop the auto-commit thread."""
     self.auto_commit_interval = None
@@ -59,8 +63,10 @@ class DocManager(DocManagerBase):
     
   
   def store_nodes_and_relationships(self, doc, doc_type, doc_id):
-    tx = self.graph.cypher.begin()
     self.build_nodes(doc_type, doc, doc_id)
+    for node_type in self.doc_types:
+      self.apply_id_constraint(node_type)
+    tx = self.graph.cypher.begin()
     for query in self.query_nodes.keys():
       tx.append(query, {"parameters":self.query_nodes[query]})
     main_type = self.doc_types.pop(0)
@@ -80,7 +86,6 @@ class DocManager(DocManagerBase):
     query = "CREATE (c:Document:{doc_type} {{parameters}})".format(doc_type=doc_type)
     self.query_nodes.update({query: parameters})
 
-    #CREATE (c:Document:{doc_type} {{parameters}})-[:TALKS_SESSION]->(c:Document:{doc_type} {{parameters}})
   def build_relationships(self, doc_id, main_type, node_type):
     relationship_type = main_type + "_" + node_type
     statement = "MATCH (a:{main_type}), (b:{node_type}) WHERE a.id = '{doc_id}' AND b.id = '{doc_id}' CREATE (a)-[r:{relationship_type}]->(b)".format(main_type=main_type, node_type=node_type, doc_id=doc_id, relationship_type=relationship_type)
