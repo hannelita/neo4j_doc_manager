@@ -96,7 +96,15 @@ class DocManager(DocManagerBase):
     LOG.error("Bulk")
 
   def update(self, document_id, update_spec, namespace, timestamp):
-    LOG.error("Update")
+    self.commit()
+    doc_id = u(document_id)
+    update_value_list = update_spec['$set']
+    index, doc_type = self._index_and_mapping(namespace)
+    tx = self.graph.cypher.begin()
+    for update_value in update_value_list.keys():
+      statement = "MATCH (d:Document:{doc_type}) WHERE d.id = '{doc_id}' SET d.{update_value} = '{value}'".format(doc_type=doc_type, doc_id=doc_id, update_value=update_value, value=update_value_list[update_value])
+      tx.append(statement)
+    tx.commit()
 
   def remove(self, document_id, namespace, timestamp):
     LOG.error("remove")
