@@ -107,7 +107,13 @@ class DocManager(DocManagerBase):
     tx.commit()
 
   def remove(self, document_id, namespace, timestamp):
-    LOG.error("remove")
+    """Removes a document from Neo4j."""
+    doc_id = u(document_id)
+    index, doc_type = self._index_and_mapping(namespace)
+    tx = self.graph.cypher.begin()
+    statement = "MATCH (d)-[r]-() WHERE d.id = '{doc_id}' DELETE d, r".format(doc_id=doc_id)
+    tx.append(statement)
+    tx.commit()
 
   def search(self, start_ts, end_ts):
     LOG.error("Search")
