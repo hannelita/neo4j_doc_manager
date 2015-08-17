@@ -67,22 +67,28 @@ class DocManager(DocManagerBase):
     for node_type in self.doc_types:
       self.apply_id_constraint(node_type)
     tx = self.graph.cypher.begin()
-    for query in self.query_nodes.keys():
-      tx.append(query, {"parameters":self.query_nodes[query]})
+    for statement in self.query_nodes.keys():
+      tx.append(statement, {"parameters":self.query_nodes[statement]})
     main_type = self.doc_types.pop(0)
     for node_type in self.doc_types:
       tx.append(self.build_relationships(doc_id, main_type, node_type))
     tx.commit()
+    self.query_nodes = {}
+    self.doc_types = []
 
   def build_nodes(self, doc_type, hash, id):
     self.doc_types.append(doc_type)
     parameters = {'id':id}
     for key in hash.keys():
-      if (type(hash[key]) is str) or (type(hash[key]) is list):
+      if (type(hash[key]) is dict):
+        self.build_nodes(key, hash[key], id)
+      elif ((type(hash[key]) is list) and (type(hash[key][0]) is dict)):
+        for json in hash[key]:
+          json_key = key + str(hash[key].index(json))
+          self.build_nodes(json_key, json, id)
+      else:
         value = hash[key]
         parameters.update({ key: value })
-      else:
-        self.build_nodes(key, hash[key], id)
     query = "CREATE (c:Document:{doc_type} {{parameters}})".format(doc_type=doc_type)
     self.query_nodes.update({query: parameters})
 
@@ -111,7 +117,7 @@ class DocManager(DocManagerBase):
     doc_id = u(document_id)
     index, doc_type = self._index_and_mapping(namespace)
     tx = self.graph.cypher.begin()
-    statement = "MATCH (d)-[r]-() WHERE d.id = '{doc_id}' DELETE d, r".format(doc_id=doc_id)
+    statement = "MATCH (d:Document) WHERE d.id = '{doc_id}' OPTIONAL MATCH (d)-[r]-() DELETE d, r".format(doc_id=doc_id, doc_type=doc_type)
     tx.append(statement)
     tx.commit()
 
