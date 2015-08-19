@@ -71,7 +71,7 @@ class DocManager(DocManagerBase):
       tx.append(statement, {"parameters":self.query_nodes[statement]})
     main_type = self.doc_types.pop(0)
     for node_type in self.doc_types:
-      tx.append(self.build_relationships(doc_id, main_type, node_type))
+      tx.append(self.build_relationships(main_type, node_type), {"doc_id": doc_id})
     tx.commit()
     self.query_nodes = {}
     self.doc_types = []
@@ -92,9 +92,9 @@ class DocManager(DocManagerBase):
     query = "CREATE (c:Document:{doc_type} {{parameters}})".format(doc_type=doc_type)
     self.query_nodes.update({query: parameters})
 
-  def build_relationships(self, doc_id, main_type, node_type):
+  def build_relationships(self, main_type, node_type):
     relationship_type = main_type + "_" + node_type
-    statement = "MATCH (a:{main_type}), (b:{node_type}) WHERE a._id = '{doc_id}' AND b._id = '{doc_id}' CREATE (a)-[r:{relationship_type}]->(b)".format(main_type=main_type, node_type=node_type, doc_id=doc_id, relationship_type=relationship_type)
+    statement = "MATCH (a:{main_type}), (b:{node_type}) WHERE a._id={{doc_id}} AND b._id ={{doc_id}} CREATE (a)-[r:{relationship_type}]->(b)".format(main_type=main_type, node_type=node_type, relationship_type=relationship_type)
     return statement
 
   def bulk_upsert(self, docs, namespace, timestamp):
