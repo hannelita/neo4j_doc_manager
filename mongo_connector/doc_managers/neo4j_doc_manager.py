@@ -107,18 +107,23 @@ class DocManager(DocManagerBase):
     update_value_list = update_spec['$set']
     index, doc_type = self._index_and_mapping(namespace)
     tx = self.graph.cypher.begin()
+    params_dict = {"doc_id": doc_id}
+    set_dict = {}
     for update_value in update_value_list.keys():
-      statement = "MATCH (d:Document:{doc_type}) WHERE d.id = '{doc_id}' SET d.{update_value} = '{value}'".format(doc_type=doc_type, doc_id=doc_id, update_value=update_value, value=update_value_list[update_value])
-      tx.append(statement)
+      set_dict.update({update_value: update_value_list[update_value]})
+    params_dict.update({"set_parameter": set_dict})
+    statement = "MATCH (d:Document:{doc_type}) WHERE d.id={{doc_id}} SET d+={{set_parameter}}".format(doc_type=doc_type)
+    tx.append(statement, params_dict)
     tx.commit()
 
   def remove(self, document_id, namespace, timestamp):
     """Removes a document from Neo4j."""
     doc_id = u(document_id)
     index, doc_type = self._index_and_mapping(namespace)
+    params_dict = {"doc_id": doc_id}
     tx = self.graph.cypher.begin()
-    statement = "MATCH (d:Document) WHERE d.id = '{doc_id}' OPTIONAL MATCH (d)-[r]-() DELETE d, r".format(doc_id=doc_id, doc_type=doc_type)
-    tx.append(statement)
+    statement = "MATCH (d:Document) WHERE d.id={doc_id} OPTIONAL MATCH (d)-[r]-() DELETE d, r"
+    tx.append(statement, params_dict)
     tx.commit()
 
   def search(self, start_ts, end_ts):
