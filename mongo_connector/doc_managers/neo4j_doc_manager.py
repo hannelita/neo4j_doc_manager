@@ -42,7 +42,7 @@ class DocManager(DocManagerBase):
     self.doc_types = []
 
   def apply_id_constraint(self, doc_type):
-    constraint = "CREATE CONSTRAINT ON (d:{doc_type}) ASSERT d.id IS UNIQUE".format(doc_type=doc_type)
+    constraint = "CREATE CONSTRAINT ON (d:{doc_type}) ASSERT d._id IS UNIQUE".format(doc_type=doc_type)
     self.graph.cypher.execute(constraint)
 
   def stop(self):
@@ -78,7 +78,7 @@ class DocManager(DocManagerBase):
 
   def build_nodes(self, doc_type, hash, id):
     self.doc_types.append(doc_type)
-    parameters = {'id':id}
+    parameters = {'_id':id}
     for key in hash.keys():
       if (type(hash[key]) is dict):
         self.build_nodes(key, hash[key], id)
@@ -94,7 +94,7 @@ class DocManager(DocManagerBase):
 
   def build_relationships(self, doc_id, main_type, node_type):
     relationship_type = main_type + "_" + node_type
-    statement = "MATCH (a:{main_type}), (b:{node_type}) WHERE a.id = '{doc_id}' AND b.id = '{doc_id}' CREATE (a)-[r:{relationship_type}]->(b)".format(main_type=main_type, node_type=node_type, doc_id=doc_id, relationship_type=relationship_type)
+    statement = "MATCH (a:{main_type}), (b:{node_type}) WHERE a._id = '{doc_id}' AND b._id = '{doc_id}' CREATE (a)-[r:{relationship_type}]->(b)".format(main_type=main_type, node_type=node_type, doc_id=doc_id, relationship_type=relationship_type)
     return statement
 
   def bulk_upsert(self, docs, namespace, timestamp):
@@ -112,7 +112,7 @@ class DocManager(DocManagerBase):
     for update_value in update_value_list.keys():
       set_dict.update({update_value: update_value_list[update_value]})
     params_dict.update({"set_parameter": set_dict})
-    statement = "MATCH (d:Document:{doc_type}) WHERE d.id={{doc_id}} SET d+={{set_parameter}}".format(doc_type=doc_type)
+    statement = "MATCH (d:Document:{doc_type}) WHERE d._id={{doc_id}} SET d+={{set_parameter}}".format(doc_type=doc_type)
     tx.append(statement, params_dict)
     tx.commit()
 
@@ -122,7 +122,7 @@ class DocManager(DocManagerBase):
     index, doc_type = self._index_and_mapping(namespace)
     params_dict = {"doc_id": doc_id}
     tx = self.graph.cypher.begin()
-    statement = "MATCH (d:Document) WHERE d.id={doc_id} OPTIONAL MATCH (d)-[r]-() DELETE d, r"
+    statement = "MATCH (d:Document) WHERE d._id={doc_id} OPTIONAL MATCH (d)-[r]-() DELETE d, r"
     tx.append(statement, params_dict)
     tx.commit()
 
