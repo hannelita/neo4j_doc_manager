@@ -10,7 +10,7 @@ from gridfs import GridFS
 from pymongo import MongoClient
 from py2neo import Graph
 
-from tests import unittest, doc_test, doc_id
+from tests import unittest, doc_test, doc_id, doc_array_test, simple_doc
 from mongo_connector.command_helper import CommandHelper
 from mongo_connector.compat import u
 from mongo_connector.connector import Connector
@@ -52,15 +52,32 @@ class Neo4jTestCase(unittest.TestCase):
     self.assertEqual(self.graph.size, 2)
     self.tearDown
 
-  @unittest.skip("Not implmented yet")
-  def test_bulk_upsert(self):
-    docc = doc_test
-    self.docman.update(doc_id, 'test.talks', 1)
-    self.assertEqual(self.graph.size, 0)
+  def test_upsert_with_json_array(self):
+    docc = doc_array_test
+    self.docman.upsert(docc, 'test.talks', 1)
+    result = self.graph.node_labels
+    self.assertIn("talks", result)
+    self.assertIn("tracks0", result)
+    self.assertIn("tracks1", result)
+    self.assertIn("speaker", result)
+    self.assertIn("session", result)
+    self.assertIn("Document", result)
+    self.assertEqual(self.graph.size, 4)
+    self.tearDown
 
   @unittest.skip("Not implmented yet")
+  def test_bulk_upsert(self):
+    self.docman.update(doc_id, 'test.talks', 1)
+    self.assertEqual(self.graph.size, 0)
+    self.tearDown
+
   def test_remove(self):
-    return
+    docc = simple_doc
+    id = docc['_id']
+    self.docman.upsert(docc, 'test.samples', 1)
+    self.docman.remove(id, 'test.samples', 1)
+    self.assertEqual(self.graph.size, 0)
+    self.tearDown
 
   @unittest.skip("Not implmented yet")
   def test_search(self):
