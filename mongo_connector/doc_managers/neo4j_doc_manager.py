@@ -9,6 +9,8 @@ import os.path as path, sys
 
 import bson.json_util
 
+from mongo_connector.doc_managers.nodes_and_relationships_builder import NodesAndRelationshipsBuilder
+
 from py2neo import Graph, authenticate
 
 from mongo_connector import errors
@@ -38,12 +40,11 @@ class DocManager(DocManagerBase):
     if self.auto_commit_interval not in [None, 0]:
       self.run_auto_commit()
     self._formatter = DefaultDocumentFormatter()
-    self.query_nodes = {}
-    self.doc_types = []
 
-  def apply_id_constraint(self, doc_type):
-    constraint = "CREATE CONSTRAINT ON (d:{doc_type}) ASSERT d._id IS UNIQUE".format(doc_type=doc_type)
-    self.graph.cypher.execute(constraint)
+  def apply_id_constraint(self, doc_types):
+    for doc_type in doc_types:
+      constraint = "CREATE CONSTRAINT ON (d:{doc_type}) ASSERT d._id IS UNIQUE".format(doc_type=doc_type)
+      self.graph.cypher.execute(constraint)
 
   def stop(self):
     """Stop the auto-commit thread."""
@@ -52,50 +53,18 @@ class DocManager(DocManagerBase):
   def upsert(self, doc, namespace, timestamp):
     """Inserts a document into Neo4j."""
     index, doc_type = self._index_and_mapping(namespace)
-    # No need to duplicate '_id' in source document
     doc_id = u(doc.pop("_id"))
-    metadata = {
-        "ns": namespace,
-        "_ts": timestamp
-    }
+    metadata = { "ns": namespace, "_ts": timestamp }
     doc = self._formatter.format_document(doc)
-    self.store_nodes_and_relationships(doc, doc_type, doc_id)
-    
-  
-  def store_nodes_and_relationships(self, doc, doc_type, doc_id):
-    self.build_nodes(doc_type, doc, doc_id)
-    for node_type in self.doc_types:
-      self.apply_id_constraint(node_type)
+    builder = NodesAndRelationshipsBuilder(doc, doc_type, doc_id)
+    self.apply_id_constraint(builder.doc_types)
     tx = self.graph.cypher.begin()
-    for statement in self.query_nodes.keys():
-      tx.append(statement, {"parameters":self.query_nodes[statement]})
-    main_type = self.doc_types.pop(0)
-    for node_type in self.doc_types:
-      tx.append(self.build_relationships(main_type, node_type), {"doc_id": doc_id})
+    for statement in builder.query_nodes.keys():
+      tx.append(statement, {"parameters":builder.query_nodes[statement]})
+    main_type = builder.doc_types.pop(0)
+    for node_type in builder.doc_types:
+      tx.append(builder.build_relationships_query(main_type, node_type), {"doc_id": doc_id})
     tx.commit()
-    self.query_nodes = {}
-    self.doc_types = []
-
-  def build_nodes(self, doc_type, hash, id):
-    self.doc_types.append(doc_type)
-    parameters = {'_id':id}
-    for key in hash.keys():
-      if (type(hash[key]) is dict):
-        self.build_nodes(key, hash[key], id)
-      elif ((type(hash[key]) is list) and (type(hash[key][0]) is dict)):
-        for json in hash[key]:
-          json_key = key + str(hash[key].index(json))
-          self.build_nodes(json_key, json, id)
-      else:
-        value = hash[key]
-        parameters.update({ key: value })
-    query = "CREATE (c:Document:{doc_type} {{parameters}})".format(doc_type=doc_type)
-    self.query_nodes.update({query: parameters})
-
-  def build_relationships(self, main_type, node_type):
-    relationship_type = main_type + "_" + node_type
-    statement = "MATCH (a:{main_type}), (b:{node_type}) WHERE a._id={{doc_id}} AND b._id ={{doc_id}} CREATE (a)-[r:{relationship_type}]->(b)".format(main_type=main_type, node_type=node_type, relationship_type=relationship_type)
-    return statement
 
   def bulk_upsert(self, docs, namespace, timestamp):
     """Insert multiple documents into Neo4j."""
