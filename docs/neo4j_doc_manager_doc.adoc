@@ -24,6 +24,38 @@ A detailed page about *DocManager* superclass and its protocol can be found link
 
 == About Neo4j DocManager
 
+=== Setup
+
+First of all, install link:https://github.com/10gen-labs/mongo-connector[mongo-connector]. This can be easily done with the following command:
+
+```
+pip install mongo-connector
+```
+
+Also be sure to have a *replica set* running. Start mongo with:
+
+```
+mongod --replSet myDevReplSet
+```
+Then open **mongo-shell* and run:
+
+```
+rs.initiate()
+```
+
+Please refer to link:https://github.com/10gen-labs/mongo-connector/wiki/FAQ[Mongo Connector FAQ] for more information. 
+
+Clone link:https://github.com/neo4j-contrib/neo4j_doc_manager[neo4j_doc_manager project] and run:
+
+```
+mongo-connector -m localhost:27017 -t localhost:7474/db/test -d neo4j_doc_manager
+
+```
+
+**-m** provides Mongo endpoint
+**-t** provides Neo4j endpoint
+**-d** specifies Neo4j Doc Manager.
+
 === Methods
 
 ==== Constructor
@@ -73,7 +105,7 @@ We then run the following statement into *mongo*, to insert a talk into a collec
 
 [source]
 ----
-db.talks.insert(  { "session": { "title": "12 Years of Spring: An Open Source Journey", "abstract": "Spring emerged as a core open source project in early 2003 and evolved to a broad portfolio of open source projects up until 2015. This keynote reflects upon the journey so far, with a focus on the open source ecosystem that Spring lives within, including stories and anecdotes from the old days as well as from recent times. Not getting stuck in history, we’ll also look at the continuity of Spring’s philosophy and its immediate applicability to Java development challenges in 2015 and beyond." }, "topics":  ["keynote", "spring"], "room": "Auditorium", "timeslot": "Wed 29th, 09:30-10:30", "speaker": { "name": "Juergen Hoeller", "bio": "Juergen Hoeller is co-founder of the Spring Framework open source project and has been serving as the project lead and release manager for the core framework since 2003. Juergen is an experienced software architect and consultant with outstanding expertise in code organization, transaction management and enterprise messaging.", "twitter": "https://twitter.com/springjuergen", "picture": "http://www.springio.net/wp-content/uploads/2014/11/juergen_hoeller-220x220.jpeg" } } );
+db.talks.insert(  { "session": { "title": "12 Years of Spring: An Open Source Journey", "abstract": "Spring emerged as a core open source project in early 2003 and evolved to a broad portfolio of open source projects up until 2015." }, "topics":  ["keynote", "spring"], "room": "Auditorium", "timeslot": "Wed 29th, 09:30-10:30", "speaker": { "name": "Juergen Hoeller", "bio": "Juergen Hoeller is co-founder of the Spring Framework open source project.", "twitter": "https://twitter.com/springjuergen", "picture": "http://www.springio.net/wp-content/uploads/2014/11/juergen_hoeller-220x220.jpeg" } } );
 ----
 
 This will insert the following document into Mongo:
@@ -82,14 +114,14 @@ This will insert the following document into Mongo:
 {
   "session": {
     "title": "12 Years of Spring: An Open Source Journey",
-    "abstract": "Spring emerged as a core open source project in early 2003 and evolved to a broad portfolio of open source projects up until 2015. This keynote reflects upon the journey so far, with a focus on the open source ecosystem that Spring lives within, including stories and anecdotes from the old days as well as from recent times. Not getting stuck in history, we’ll also look at the continuity of Spring’s philosophy and its immediate applicability to Java development challenges in 2015 and beyond."
+    "abstract": "Spring emerged as a core open source project in early 2003 and evolved to a broad portfolio of open source projects up until 2015."
   },
   "topics":  ["keynote", "spring"], 
   "room": "Auditorium",
   "timeslot": "Wed 29th, 09:30-10:30",
   "speaker": {
     "name": "Juergen Hoeller",
-    "bio": "Juergen Hoeller is co-founder of the Spring Framework open source project and has been serving as the project lead and release manager for the core framework since 2003. Juergen is an experienced software architect and consultant with outstanding expertise in code organization, transaction management and enterprise messaging.",
+    "bio": "Juergen Hoeller is co-founder of the Spring Framework open source project.",
     "twitter": "https://twitter.com/springjuergen",
     "picture": "http://www.springio.net/wp-content/uploads/2014/11/juergen_hoeller-220x220.jpeg"
   }
@@ -116,7 +148,7 @@ image::resources/images/graph1.png[]
 Now let's insert the following data. Note the nested JSON array represented by **tracks**:
 [source]
 ----
-db.talks.insert(  { "session": { "title": "12 Years of Spring: An Open Source Journey", "abstract": "Spring emerged as a core open source project in early 2003 and evolved to a broad portfolio of open source projects up until 2015. This keynote reflects upon the journey so far, with a focus on the open source ecosystem that Spring lives within, including stories and anecdotes from the old days as well as from recent times. Not getting stuck in history, we’ll also look at the continuity of Spring’s philosophy and its immediate applicability to Java development challenges in 2015 and beyond." }, "topics":  ["keynote", "spring"], "tracks": [{ "main":"Java" }, { "second":"Languages" }], "room": "Auditorium", "timeslot": "Wed 29th, 09:30-10:30", "speaker": { "name": "Juergen Hoeller", "bio": "Juergen Hoeller is co-founder of the Spring Framework open source project and has been serving as the project lead and release manager for the core framework since 2003. Juergen is an experienced software architect and consultant with outstanding expertise in code organization, transaction management and enterprise messaging.", "twitter": "https://twitter.com/springjuergen", "picture": "http://www.springio.net/wp-content/uploads/2014/11/juergen_hoeller-220x220.jpeg" } } );
+db.talks.insert(  { "session": { "title": "12 Years of Spring: An Open Source Journey", "abstract": "Spring emerged as a core open source project in early 2003 and evolved to a broad portfolio of open source projects up until 2015." }, "topics":  ["keynote", "spring"], "tracks": [{ "main":"Java" }, { "second":"Languages" }], "room": "Auditorium", "timeslot": "Wed 29th, 09:30-10:30", "speaker": { "name": "Juergen Hoeller", "bio": "Juergen Hoeller is co-founder of the Spring Framework open source project.", "twitter": "https://twitter.com/springjuergen", "picture": "http://www.springio.net/wp-content/uploads/2014/11/juergen_hoeller-220x220.jpeg" } } );
 ----
 
 [source, javascript]
@@ -124,7 +156,7 @@ db.talks.insert(  { "session": { "title": "12 Years of Spring: An Open Source Jo
 {
   "session": {
     "title": "12 Years of Spring: An Open Source Journey",
-    "abstract": "Spring emerged as a core open source project in early 2003 and evolved to a broad portfolio of open source projects up until 2015. This keynote reflects upon the journey so far, with a focus on the open source ecosystem that Spring lives within, including stories and anecdotes from the old days as well as from recent times. Not getting stuck in history, we’ll also look at the continuity of Spring’s philosophy and its immediate applicability to Java development challenges in 2015 and beyond."
+    "abstract": "Spring emerged as a core open source project in early 2003 and evolved to a broad portfolio of open source projects up until 2015."
   },
   "topics":  ["keynote", "spring"], 
   "tracks": [{ "main":"Java" }, { "second":"Languages" }],
@@ -132,7 +164,7 @@ db.talks.insert(  { "session": { "title": "12 Years of Spring: An Open Source Jo
   "timeslot": "Wed 29th, 09:30-10:30",
   "speaker": {
     "name": "Juergen Hoeller",
-    "bio": "Juergen Hoeller is co-founder of the Spring Framework open source project and has been serving as the project lead and release manager for the core framework since 2003. Juergen is an experienced software architect and consultant with outstanding expertise in code organization, transaction management and enterprise messaging.",
+    "bio": "Juergen Hoeller is co-founder of the Spring Framework open source project.",
     "twitter": "https://twitter.com/springjuergen",
     "picture": "http://www.springio.net/wp-content/uploads/2014/11/juergen_hoeller-220x220.jpeg"
   }
