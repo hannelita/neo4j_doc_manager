@@ -10,6 +10,7 @@ jdk:
 install:
   - "pip3 install mongo-connector"
   - "pip3 install py2neo"
+  - "pip3 install mongo-orchestration"
 services:
   - mongodb
 env:
@@ -21,6 +22,7 @@ before_script:
   - sed -i.bak s/dbms.security.auth_enabled=true/dbms.security.auth_enabled=false/g neo4j-community-2.2.4/conf/neo4j-server.properties
   - neo4j-community-2.2.4/bin/neo4j start
   - sleep 20
+  - mongo-orchestration start
   # - echo "replSet=myReplSett" | sudo tee -a /etc/mongodb.conf
   # - sudo service mongodb restart
   # - sleep 20
