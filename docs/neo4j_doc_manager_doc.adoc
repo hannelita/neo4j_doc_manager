@@ -1,0 +1,210 @@
+= Neo4j Doc Manager
+Neo4j Team <michael.hunger@neotechnology.com>
+v1.0, 2015-08
+:toc:
+:toclevels: 6
+
+:sectnums:
+
+== Our Goal
+
+Graphs are everywhere. Under this perspective, it would be interesting to have data from different databases inside Neo4j. That's why we have created a Mongo Connector for Neo4j, aiming to transfer and sync data that is in MongoDB to a graph structure. 
+
+Mongo and Neo4j are held by different data structures. In the further sections we will explain the standards adopted for the mapping plan. In general terms, our goal was to implement a default mapping plan, covering the most well-known cases. It's basically the idea of Convention over Configuration. We tried to collect some generic Mongo Document structures based on community feedback and structure the mappings based on them. It's important to note that we are opened for further suggestions and improvements.
+
+Basically Neo4j Mongo Connector will translate documents into graphs:
+
+image::resources/images/doc_to_graph.png[]
+
+MongoDB has a powerful tool to help into this translation, called link:https://github.com/10gen-labs/mongo-connector[mongo-connector]. It provides a simple protocol to transfer data from MongoDB to another database. Currently there are some implementations into the official repository, such as Mongo Connector for Elasticsearch and Mongo Connector for Solr. You can grab more detailed information about **mongo-connector** into the official link:https://github.com/10gen-labs/mongo-connector/wiki[Project Wiki], but in general terms, you must have a MongoDB instance running with a link:http://docs.mongodb.org/manual/tutorial/deploy-replica-set/[replica set]. An **OplogThread** thread then will hear all the actions that may happen into MongoDB. The **mongo-connector** provides an interface to collect the events caught by the OplogThread. The communication interface is implemented into a structure called **DocManager**, which can properly receive and handle Mongo documents and information about the database and its collections.
+
+By extending the **DocManager** class, we can easily create a Configuration that interacts with Neo4j. Some methods are required to be implemented to keep Mongo Connector protocol consistent. Next sessions will describe in details how **neo4j_doc_manager** handles each of these methods.
+
+A detailed page about *DocManager* superclass and its protocol can be found link:https://github.com/10gen-labs/mongo-connector/wiki/Writing-Your-Own-DocManager[here]
+
+== About Neo4j DocManager
+
+=== Setup
+
+First of all, install link:https://github.com/10gen-labs/mongo-connector[mongo-connector]. This can be easily done with the following command:
+
+```
+pip install mongo-connector
+```
+
+Also be sure to have a *replica set* running. Start mongo with:
+
+```
+mongod --replSet myDevReplSet
+```
+Then open **mongo-shell* and run:
+
+```
+rs.initiate()
+```
+
+Please refer to link:https://github.com/10gen-labs/mongo-connector/wiki/FAQ[Mongo Connector FAQ] for more information. 
+
+Clone link:https://github.com/neo4j-contrib/neo4j_doc_manager[neo4j_doc_manager project] and run:
+
+```
+mongo-connector -m localhost:27017 -t localhost:7474/db/test -d neo4j_doc_manager
+
+```
+
+**-m** provides Mongo endpoint
+**-t** provides Neo4j endpoint
+**-d** specifies Neo4j Doc Manager.
+
+=== Methods
+
+==== Constructor
+
+By invoking **Neo4j Doc Manager** initialisation command with proper parameters ( `mongo-connector -m [mongo_url] -t [neo4j_server_url] -d neo4j_doc_manager` ), the **Neo4jDocManager** constructor is called.
+
+Constructor receives the following arguments:
+[source, python]
+----
+(self, url, auto_commit_interval=DEFAULT_COMMIT_INTERVAL,
+                 unique_key='_id', chunk_size=DEFAULT_MAX_BULK, **kwargs)
+
+----
+
+**url** corresponds the address where a Neo4j server instance is running.
+
+**unique_key** corresponds to the identifier refers to the unique key that is being used in Mongo. Default value is *_id* .
+
+===== Authentication
+
+==== Upsert
+
+Upsert consists into the method that creates new nodes and relationships given a Mongo Document. The method signature is described as below:
+[source, python]
+----
+upsert(self, doc, namespace, timestamp):
+----
+
+Basically we **translate every element of a collection into a new node**. Since the elements can be composite, we have adopted some patterns to properly convert each document into a group of nodes and relationships:
+
+* Each new node will be receive *Document* Label
+* Also the document type (the referred collection from the incoming document) will also be inserted as a node label
+* Document id will be propagated to the node. That means node will have the same '_id' that Mongo Document has.
+* If the document contains the elements below, they will recursively be transformed into new nodes as well
+  ** a nested document
+  ** an array of documents
+* All the other types of data into the document will be translated into node properties.
+
+In terms of relationships, every time we find composite documents, we will stablish a relationship between the root document and the nested document.
+
+To clarify our scenario, let's imagine an empty MongoDB instance.
+Let's also consider an empty instance of Neo4j.
+
+===== Simple case
+
+We then run the following statement into *mongo*, to insert a talk into a collection of talks:
+
+[source]
+----
+db.talks.insert(  { "session": { "title": "12 Years of Spring: An Open Source Journey", "abstract": "Spring emerged as a core open source project in early 2003 and evolved to a broad portfolio of open source projects up until 2015." }, "topics":  ["keynote", "spring"], "room": "Auditorium", "timeslot": "Wed 29th, 09:30-10:30", "speaker": { "name": "Juergen Hoeller", "bio": "Juergen Hoeller is co-founder of the Spring Framework open source project.", "twitter": "https://twitter.com/springjuergen", "picture": "http://www.springio.net/wp-content/uploads/2014/11/juergen_hoeller-220x220.jpeg" } } );
+----
+
+This will insert the following document into Mongo:
+[source, json]
+----
+{
+  "session": {
+    "title": "12 Years of Spring: An Open Source Journey",
+    "abstract": "Spring emerged as a core open source project in early 2003 and evolved to a broad portfolio of open source projects up until 2015."
+  },
+  "topics":  ["keynote", "spring"], 
+  "room": "Auditorium",
+  "timeslot": "Wed 29th, 09:30-10:30",
+  "speaker": {
+    "name": "Juergen Hoeller",
+    "bio": "Juergen Hoeller is co-founder of the Spring Framework open source project.",
+    "twitter": "https://twitter.com/springjuergen",
+    "picture": "http://www.springio.net/wp-content/uploads/2014/11/juergen_hoeller-220x220.jpeg"
+  }
+}
+----
+
+This will be reflected as follows into Neo4j:
+
+image::resources/images/graph1.png[]
+
+**Created nodes:** 
+
+* _Document:talks_ - talks is the root node, coming from Mongo Document Collection, with an id that also comes from MongoDB. Non nested Documents are converted into regular properties, such as "room", "topics" and "timeslot" (a common String array).
+* _Document:session_ - Nested Document. Inner key/values are converted into Node properties. Note that the id incoming from root *talks* collection is propagated to this Node. Also, note that this node is labelled as its direct document key, in this case, *session*.
+* _Document:speaker_ - also nested Document.
+
+**Created Relationships:**
+
+* A relationship that connects *talks* and *session* nodes, called **talks_session**,
+* A relationship that connects *talks* and *speaker* nodes, called **talks_speaker**.
+
+===== Case containing a JSON Array
+
+Now let's insert the following data. Note the nested JSON array represented by **tracks**:
+[source]
+----
+db.talks.insert(  { "session": { "title": "12 Years of Spring: An Open Source Journey", "abstract": "Spring emerged as a core open source project in early 2003 and evolved to a broad portfolio of open source projects up until 2015." }, "topics":  ["keynote", "spring"], "tracks": [{ "main":"Java" }, { "second":"Languages" }], "room": "Auditorium", "timeslot": "Wed 29th, 09:30-10:30", "speaker": { "name": "Juergen Hoeller", "bio": "Juergen Hoeller is co-founder of the Spring Framework open source project.", "twitter": "https://twitter.com/springjuergen", "picture": "http://www.springio.net/wp-content/uploads/2014/11/juergen_hoeller-220x220.jpeg" } } );
+----
+
+[source, javascript]
+----
+{
+  "session": {
+    "title": "12 Years of Spring: An Open Source Journey",
+    "abstract": "Spring emerged as a core open source project in early 2003 and evolved to a broad portfolio of open source projects up until 2015."
+  },
+  "topics":  ["keynote", "spring"], 
+  "tracks": [{ "main":"Java" }, { "second":"Languages" }],
+  "room": "Auditorium",
+  "timeslot": "Wed 29th, 09:30-10:30",
+  "speaker": {
+    "name": "Juergen Hoeller",
+    "bio": "Juergen Hoeller is co-founder of the Spring Framework open source project.",
+    "twitter": "https://twitter.com/springjuergen",
+    "picture": "http://www.springio.net/wp-content/uploads/2014/11/juergen_hoeller-220x220.jpeg"
+  }
+}
+----
+
+The above document will be translated into Neo4j as follows:
+
+**Created nodes:**
+
+* _Document:talks_ - talks is the root node, coming from Mongo Document Collection, with an id that also comes from MongoDB. Non nested Documents are converted into regular properties, such as "room", "topics" and "timeslot" (a common String array).
+
+* _Document:tracks0_ - A node that represents the first JSON of **tracks** array [at index 0]. It contains the propagated **talks** id, plus the properties of the nested document.
+* _Document:tracks1_ - A node that represents the second JSON of **tracks** array [at index 1]. It contains the propagated **talks** id, plus the properties of the nested document.
+
+* _Document:session_ - Nested Document. Inner key/values are converted into Node properties. Note that the id incoming from root *talks* collection is propagated to this Node. Also, note that this node is labelled as its direct document key, in this case, *session*.
+* _Document:speaker_ - also nested Document.
+
+**Created Relationships:**
+
+* A relationship that connects *talks* and *session* nodes, called **talks_session**,
+* A relationship that connects *talks* and *speaker* nodes, called **talks_speaker**.
+* A relationship that connects *talks* and the first element of *tracks* array (_tracks0_), called *talks_tracks0*
+* A relationship that connects *talks* and the second element of *tracks* array (_tracks1_), called *talks_tracks1*
+
+===== Case containing Mongo documents joined by an _id reference
+
+Todo
+
+==== Update
+
+===== $set
+
+===== multi
+
+===== Creating new documents by an update action
+
+==== Delete
+
+===== Removing relationships
+
+
+
