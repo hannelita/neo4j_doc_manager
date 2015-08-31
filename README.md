@@ -1,3 +1,5 @@
+![](https://travis-ci.org/neo4j-contrib/neo4j_doc_manager.svg)
+
 # Overview
 
 The main idea of [Neo4j](http://neo4j.com/) Doc Manager is to make Mongo information available into a Neo4j graph structure, following the format specified by [Mongo Connector](https://github.com/10gen-labs/mongo-connector).
