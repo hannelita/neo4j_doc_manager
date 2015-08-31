@@ -1,0 +1,32 @@
+language: python
+sudo: false
+python:
+  - "3.2"
+  - "3.3"
+  - "3.4"
+# command to install dependencies
+jdk:
+  - oraclejdk7
+install:
+  - "pip3 install mongo-connector"
+  - "pip3 install py2neo"
+  - "pip3 install mongo-orchestration"
+services:
+  - mongodb
+env:
+  - PYTHONPATH=.
+before_script:
+  # install Neo4j locally:
+  - wget dist.neo4j.org/neo4j-community-2.2.4-unix.tar.gz
+  - tar -xzf neo4j-community-2.2.4-unix.tar.gz
+  - sed -i.bak s/dbms.security.auth_enabled=true/dbms.security.auth_enabled=false/g neo4j-community-2.2.4/conf/neo4j-server.properties
+  - neo4j-community-2.2.4/bin/neo4j start
+  - sleep 20
+  - mongo-orchestration start
+  # - echo "replSet=myReplSett" | sudo tee -a /etc/mongodb.conf
+  # - sudo service mongodb restart
+  # - sleep 20
+  - mongo test --eval 'rs.initiate();'
+  - sleep 15
+# command to run tests
+script: python3 -m unittest discover
