@@ -192,7 +192,46 @@ The above document will be translated into Neo4j as follows:
 
 ===== Case containing Mongo documents joined by an _id reference
 
-Todo
+Let's imagine now an explicit *_id* reference between two documents, such as:
+
+[source]
+----
+db.places.insert({"_id": "32434ab234324", "name": "The cool place", "url": "cool.example.net" })
+----
+
+[source, javascript]
+----
+{ 
+  "_id": "32434ab234324", 
+  "name": "The cool place", 
+  "url": "cool.example.net" 
+}
+----
+
+[source]
+----
+db.people.insert({ "name": "Michael", "places_id": "32434ab234324", "url": "neo4j.com/Michael" })
+----
+
+[source, javascript]
+----
+{
+  "name": "Michael", 
+  "places_id": "32434ab234324", 
+  "url": "neo4j.com/Michael" 
+}
+----
+
+Note that two documents were inserted, and *people* references *place* explicitily by *id*. __Neo4j Doc Manager__ will map every field that ends with ** \_id ** into an explicit relationship. First, we run a *MERGE* to see if the respective node exists. In the above example, we insert a _place_, and then a _people_. When inserting the _people_ type, the connector will identify an explicit _id_ relationshipt, through __places\_id__ , and will try to find the respective node. If it does exist (and it should), a relationshipt between the two nodes will be created.
+
+**Created nodes:**
+
+* _Document:places_ - Simple root node, with the properties _name_ and _url_ and an *_id*.
+* _Document:people_ - Anotehr node, that comes from an differente _upsert_ method call. It creates another simple node, with the properties _name_ and _url_.
+
+**Created Relationships:**
+
+* A relationship that connects *people* and *places* nodes is created due to the property *places_id* on _people_ node. It is called **people_places**.
 
 ==== Update
 
