@@ -10,7 +10,7 @@ from gridfs import GridFS
 from pymongo import MongoClient
 from py2neo import Graph
 
-from tests import unittest, doc_test, doc_id, doc_array_test, simple_doc
+from tests import unittest, doc_test, doc_id, doc_array_test, simple_doc, doc_rel, doc_explicit_rel_id
 from mongo_connector.command_helper import CommandHelper
 from mongo_connector.compat import u
 from mongo_connector.connector import Connector
@@ -52,7 +52,7 @@ class Neo4jTestCase(unittest.TestCase):
     self.assertEqual(self.graph.size, 2)
     self.tearDown
 
-  def test_upsert_with_json_array(self):
+  def test_upsert_with_explicit_id(self):
     docc = doc_array_test
     self.docman.upsert(docc, 'test.talks', 1)
     result = self.graph.node_labels
@@ -63,6 +63,18 @@ class Neo4jTestCase(unittest.TestCase):
     self.assertIn("session", result)
     self.assertIn("Document", result)
     self.assertEqual(self.graph.size, 4)
+    self.tearDown
+
+  def test_upsert_with_json_array(self):
+    docc = doc_rel
+    self.docman.upsert(docc, 'test.places', 1)
+    docc = doc_explicit_rel_id
+    self.docman.upsert(docc, 'test.people', 1)
+    result = self.graph.node_labels
+    self.assertIn("places", result)
+    self.assertIn("people", result)
+    self.assertIn("Document", result)
+    self.assertEqual(self.graph.size, 1)
     self.tearDown
 
   @unittest.skip("Not implmented yet")

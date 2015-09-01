@@ -63,7 +63,10 @@ class DocManager(DocManagerBase):
       tx.append(statement, {"parameters":builder.query_nodes[statement]})
     main_type = builder.doc_types.pop(0)
     for node_type in builder.doc_types:
-      tx.append(builder.build_relationships_query(main_type, node_type), {"doc_id": doc_id})
+      tx.append(builder.build_relationships_query(main_type, node_type), {"doc_id": doc_id, "explicit_id": doc_id})
+    for explicit_id in builder.explicit_ids.keys():
+      statement = builder.build_relationships_query(main_type, builder.explicit_ids[explicit_id])
+      tx.append(statement, {"doc_id": doc_id, "explicit_id": explicit_id})
     tx.commit()
 
   def bulk_upsert(self, docs, namespace, timestamp):
