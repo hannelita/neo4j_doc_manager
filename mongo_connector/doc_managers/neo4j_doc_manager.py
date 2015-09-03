@@ -74,7 +74,6 @@ class DocManager(DocManagerBase):
     LOG.error("Bulk")
 
   def update(self, document_id, update_spec, namespace, timestamp):
-    self.commit()
     doc_id = u(document_id)
     update_value_list = update_spec['$set']
     index, doc_type = self._index_and_mapping(namespace)
