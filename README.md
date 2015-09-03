@@ -2,11 +2,12 @@
 
 # Overview
 
-The main idea of [Neo4j](http://neo4j.com/) Doc Manager is to make Mongo information available into a Neo4j graph structure, following the format specified by [Mongo Connector](https://github.com/10gen-labs/mongo-connector).
+The [Neo4j](http://neo4j.com/) Doc Manager takes MongoDB documents and makes it easy to query them for relationships by making  them available in a Neo4j graph structure, following the format specified by [Mongo Connector](https://github.com/10gen-labs/mongo-connector).  It is intended for live one-way syncronization from MongoDB to Neo4j, where you have both databases running and take advantage of each databases' strength in your application (polyglot persistance).
 
 #Use case
 
-We assume that you are willing to have Mongo and Neo4j up and running into your project. We must then cover the following scenarios:
+We assume that you will have both Mongo and Neo4j running for your project. The syncronization process must cover both existing and new data.
+
 ### Existing data
 Assuming that you might already have information on your Mongo Database, you should migrate these data to Neo4j graph structure.
 For instance, let's consider the following JSON structure for your Mongo information:
@@ -27,10 +28,10 @@ For instance, let's consider the following JSON structure for your Mongo informa
   }
 }
 ```
-Neo4j Doc Manager will turn keys into graph nodes. The values contained on each key will become properties. 
+Neo4j Doc Manager will turn keys into graph nodes. Nested values on each key will become properties. 
 
 ### New Data
-We assume that if a new information comes to Mongo and it successfully saves, then it goes to Neo4j. Future versions shall contain a more flexible way to handle new information.
+The current version takes any new information which is committed to Mongo and saves it to Neo4j. Future versions shall contain a more flexible way to handle new information.
 
 # Using Neo4j Doc Manager
 
