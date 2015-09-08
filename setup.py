@@ -9,8 +9,6 @@ except ImportError:
     from distutils.core import setup, find_packages
     from distutils.extension import Extension
 
-from py2neo import __license__
-
 extra_opts = {}
 
 python_2 = sys.version_info < (3,)
@@ -30,13 +28,13 @@ package_metadata = {
                         "Neo4j graph structure, via Mongo-Connector.",
     "author": "Neo4j Team",
     "author_email": "contact@neo4j.com",
-    "url": "http://neo4j.org/",
+    "url": "https://github.com/neo4j-contrib/neo4j_doc_manager.git",
     "entry_points": {
         "console_scripts": [
         ],
     },
     "packages": packages,
-    "license": "",
+    "license": "Apache Software License",
     "classifiers": [
         "Development Status :: 5 - Production/Stable",
         "Intended Audience :: Developers",
