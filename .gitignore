@@ -31,3 +31,6 @@ target/
 
 # OSX
 .DS_Store
+
+dist/
+*.egg-info/
