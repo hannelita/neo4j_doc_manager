@@ -34,3 +34,6 @@ target/
 
 dist/
 *.egg-info/
+
+*-sdist/
+*-wheel/
