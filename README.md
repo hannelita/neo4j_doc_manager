@@ -4,7 +4,40 @@
 
 The [Neo4j](http://neo4j.com/) Doc Manager takes MongoDB documents and makes it easy to query them for relationships by making  them available in a Neo4j graph structure, following the format specified by [Mongo Connector](https://github.com/10gen-labs/mongo-connector).  It is intended for live one-way syncronization from MongoDB to Neo4j, where you have both databases running and take advantage of each databases' strength in your application (polyglot persistance).
 
-#Use case
+# Installing
+
+You must have Python installed in order to use this project. Python 3 is recommended.
+
+First, install mongo-connector:
+```
+pip install mongo-connector
+```
+Now install neo4j_doc_manager:
+
+```
+pip install neo4j_doc_manager
+```
+
+Or you can clone this repository and set PYTHONPATH to it's local directory by running
+```
+export PYTHONPATH=.
+```
+
+## Using Neo4j Doc Manager
+
+After installing the package or cloning this repository, run:
+
+```
+mongo-connector -m localhost:27017 -t localhost:7474/db/test -d neo4j_doc_manager
+
+```
+
+**-m** provides Mongo endpoint
+**-t** provides Neo4j endpoint
+**-d** specifies Neo4j Doc Manager.
+
+
+# Use case
 
 We assume that you will have both Mongo and Neo4j running for your project. The syncronization process must cover both existing and new data.
 
@@ -33,15 +66,3 @@ Neo4j Doc Manager will turn keys into graph nodes. Nested values on each key wil
 ### New Data
 The current version takes any new information which is committed to Mongo and saves it to Neo4j. Future versions shall contain a more flexible way to handle new information.
 
-# Using Neo4j Doc Manager
-
-After cloning this repository, run:
-
-```
-mongo-connector -m localhost:27017 -t localhost:7474/db/test -d neo4j_doc_manager
-
-```
-
-**-m** provides Mongo endpoint
-**-t** provides Neo4j endpoint
-**-d** specifies Neo4j Doc Manager.
