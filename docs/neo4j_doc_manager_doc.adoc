@@ -8,11 +8,9 @@ v1.0, 2015-08
 
 == Our Goal
 
-Graphs are everywhere. Under this perspective, it would be interesting to have data from different databases inside Neo4j. That's why we have created a Mongo Connector for Neo4j, aiming to transfer and sync data that is in MongoDB to a graph structure. 
+Neo4j is an OLTP graph database which excels at querying data relationships, which is a weakness of other NoSQL and SQL solutions.  We created the Mongo Connector for Neo4j to allow MongoDB developers to store JSON data in Mongo while querying the relationship between the data using Neo4j.  We call this polyglot persistence - using the database best suited for the type of data and querying your application requires.
 
-Mongo and Neo4j are held by different data structures. In the further sections we will explain the standards adopted for the mapping plan. In general terms, our goal was to implement a default mapping plan, covering the most well-known cases. It's basically the idea of Convention over Configuration. We tried to collect some generic Mongo Document structures based on community feedback and structure the mappings based on them. It's important to note that we are opened for further suggestions and improvements.
-
-Basically Neo4j Mongo Connector will translate documents into graphs:
+MongDB stores data as JSON documents, while Neo4j stores data as graphs.  In order to enable graph-based querying of Mongo data, we need to determine how to map between these two different data structures.  Our initial goal was to implement a default mapping plan, covering the most well-known cases. We wanted to follow convention instead of requiring configuration. We collected some generic Mongo Document structures based on community feedback and structured the mapping based on them. It's important to note that we are opened for further suggestions and improvements.
 
 image::resources/images/doc_to_graph.png[]
 
