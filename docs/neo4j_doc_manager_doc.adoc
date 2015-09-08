@@ -8,17 +8,19 @@ v1.0, 2015-08
 
 == Our Goal
 
-Neo4j is an OLTP graph database which excels at querying data relationships, which is a weakness of other NoSQL and SQL solutions.  We created the Mongo Connector for Neo4j to allow MongoDB developers to store JSON data in Mongo while querying the relationship between the data using Neo4j.  We call this polyglot persistence - using the database best suited for the type of data and querying your application requires.
+Neo4j is an OLTP graph database which excels at querying data relationships, which is a weakness of other NoSQL and SQL solutions.  We created the Neo4j Doc Manager for the Mongo Connector to allow MongoDB developers to store JSON data in Mongo while querying the relationship between the data using Neo4j.  We call this polyglot persistence - using the database best suited for the type of data and querying your application requires.
 
 MongDB stores data as JSON documents, while Neo4j stores data as graphs.  In order to enable graph-based querying of Mongo data, we need to determine how to map between these two different data structures.  Our initial goal was to implement a default mapping plan, covering the most well-known cases. We wanted to follow convention instead of requiring configuration. We collected some generic Mongo Document structures based on community feedback and structured the mapping based on them. It's important to note that we are opened for further suggestions and improvements.
 
 image::resources/images/doc_to_graph.png[]
 
-MongoDB has a powerful tool to help into this translation, called link:https://github.com/10gen-labs/mongo-connector[mongo-connector]. It provides a simple protocol to transfer data from MongoDB to another database. Currently there are some implementations into the official repository, such as Mongo Connector for Elasticsearch and Mongo Connector for Solr. You can grab more detailed information about **mongo-connector** into the official link:https://github.com/10gen-labs/mongo-connector/wiki[Project Wiki], but in general terms, you must have a MongoDB instance running with a link:http://docs.mongodb.org/manual/tutorial/deploy-replica-set/[replica set]. An **OplogThread** thread then will hear all the actions that may happen into MongoDB. The **mongo-connector** provides an interface to collect the events caught by the OplogThread. The communication interface is implemented into a structure called **DocManager**, which can properly receive and handle Mongo documents and information about the database and its collections.
+This project is based upon the link:https://github.com/10gen-labs/mongo-connector[Mongo Connector]. It provides a simple protocol to transfer data from MongoDB to another database. While Mongo publishes Doc Manager implementations for other databses, they did not provide an implementation for Neo4j.  You can grab more detailed information about **mongo-connector** into the official link:https://github.com/10gen-labs/mongo-connector/wiki[Project Wiki].
 
-By extending the **DocManager** class, we can easily create a Configuration that interacts with Neo4j. Some methods are required to be implemented to keep Mongo Connector protocol consistent. Next sessions will describe in details how **neo4j_doc_manager** handles each of these methods.
+The Mongo Connector requires creating a MongoDB link:http://docs.mongodb.org/manual/tutorial/deploy-replica-set/[replica set]. An **OplogThread** thread then will listen to all CUD actions occurring in MongoDB. The **mongo-connector** provides an interface to collect the events caught by the OplogThread. The communication interface is implemented into a structure called **DocManager**, which can properly receive and handle Mongo documents and information about the database and its collections.
 
-A detailed page about *DocManager* superclass and its protocol can be found link:https://github.com/10gen-labs/mongo-connector/wiki/Writing-Your-Own-DocManager[here]
+By extending the **DocManager** class, we have created a Configuration that interacts with Neo4j. Some methods are required to be implemented to keep Mongo Connector protocol consistent. The next section describes in detail how **neo4j_doc_manager** handles each of these methods.
+
+Detailed documentation for the *DocManager* superclass and its protocol can be found link:https://github.com/10gen-labs/mongo-connector/wiki/Writing-Your-Own-DocManager[here]
 
 == About Neo4j DocManager
 
