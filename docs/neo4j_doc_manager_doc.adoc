@@ -63,12 +63,11 @@ To start the service, run the following command:
 ```
 mongo-connector -m localhost:27017 -t localhost:7474/db/test -d neo4j_doc_manager
 
-```
-
 **-m** provides Mongo endpoint
 **-t** provides Neo4j endpoint
 **-d** specifies Neo4j Doc Manager.
 
+```
 === Methods
 
 ==== Constructor
