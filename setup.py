@@ -9,8 +9,6 @@ except ImportError:
     from distutils.core import setup, find_packages
     from distutils.extension import Extension
 
-from py2neo import __license__
-
 extra_opts = {}
 
 python_2 = sys.version_info < (3,)
@@ -23,25 +21,27 @@ except IOError:
 
 packages = find_packages(exclude=("book", "examples", "examples.*", "test", "test.*"))
 package_metadata = {
-    "name": "neo4j_doc_manager",
-    "version": "1.0.0.dev",
+    "name": "neo4j-doc-manager",
+    "version": "1.0.0.dev1",
     "description": "Neo4j Doc manager for Mongo Connector",
     "long_description": "Neo4j Doc Manager is a tool that will import data in Mongodb for a " 
                         "Neo4j graph structure, via Mongo-Connector.",
     "author": "Neo4j Team",
     "author_email": "contact@neo4j.com",
-    "url": "http://neo4j.org/",
+    "url": "https://github.com/neo4j-contrib/neo4j_doc_manager.git",
     "entry_points": {
         "console_scripts": [
         ],
     },
     "packages": packages,
-    "license": "",
+    "install_requires": ["requests>=2.5.1"],
+    "license": "Apache Software License",
     "classifiers": [
         "Development Status :: 5 - Production/Stable",
         "Intended Audience :: Developers",
         "License :: OSI Approved :: Apache Software License",
         "Operating System :: OS Independent",
+        "Programming Language :: Python :: 2.7",
         "Programming Language :: Python :: 3.3",
         "Programming Language :: Python :: 3.4",
         "Topic :: Database",

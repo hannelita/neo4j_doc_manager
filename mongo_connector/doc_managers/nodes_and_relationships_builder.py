@@ -4,7 +4,7 @@ according to a Mongo document.
 """
 import re
 
-class NodesAndRelationshipsBuilder():
+class NodesAndRelationshipsBuilder(object):
   def __init__(self, doc, doc_type, doc_id):
     self.query_nodes = {}
     self.doc_types = []

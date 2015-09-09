@@ -25,15 +25,21 @@ export PYTHONPATH=.
 
 ## Using Neo4j Doc Manager
 
+If you have authentication enabled for Neo4j, be sure to set **NEO4J_AUTH** environment variable, containing your user and password. 
+
+```
+export NEO4J_AUTH=user:password
+```
+
 After installing the package or cloning this repository, run:
 
 ```
-mongo-connector -m localhost:27017 -t localhost:7474/db/test -d neo4j_doc_manager
+mongo-connector -m localhost:27017 -t http://localhost:7474/db/test -d neo4j_doc_manager
 
 ```
 
 **-m** provides Mongo endpoint
-**-t** provides Neo4j endpoint
+**-t** provides Neo4j endpoint. Specify the protocol (http) and also the database name (in our example we use __test__)
 **-d** specifies Neo4j Doc Manager.
 
 

@@ -4,7 +4,7 @@ communicates with Neo4j Server.
 """
 import base64
 import logging
-
+import os
 import os.path as path, sys
 
 import bson.json_util
@@ -32,8 +32,8 @@ class DocManager(DocManagerBase):
 
   def __init__(self, url, auto_commit_interval=DEFAULT_COMMIT_INTERVAL,
                  unique_key='_id', chunk_size=DEFAULT_MAX_BULK, **kwargs):
-    self.remote_graph = Graph(url, **kwargs.get('clientOptions', {}))
-    self.graph = Graph()
+    
+    self.graph = Graph(url)
     self.auto_commit_interval = auto_commit_interval
     self.unique_key = unique_key
     self.chunk_size = chunk_size

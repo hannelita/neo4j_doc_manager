@@ -1,15 +1,18 @@
 language: python
 sudo: false
 python:
+  - "2.7"
   - "3.3"
   - "3.4"
 # command to install dependencies
 jdk:
   - oraclejdk7
 install:
-  - "pip3 install mongo-connector"
-  - "pip3 install py2neo"
-  - "pip3 install mongo-orchestration"
+  - "pip install requests"
+  - "pip install unittest2"
+  - "pip install mongo-connector"
+  - "pip install py2neo"
+  - "pip install mongo-orchestration"
 services:
   - mongodb
 env:
@@ -28,4 +31,4 @@ before_script:
   - mongo test --eval 'rs.initiate();'
   - sleep 15
 # command to run tests
-script: python3 -m unittest discover
+script: python -m unittest discover
