@@ -4,7 +4,6 @@ communicates with Neo4j Server.
 """
 import base64
 import logging
-import dotenv
 import os
 import os.path as path, sys
 

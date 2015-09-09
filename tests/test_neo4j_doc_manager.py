@@ -22,7 +22,7 @@ class Neo4jTestCase(unittest.TestCase):
   @classmethod
   def setUpClass(self):
     self.graph = Graph()
-    self.docman = DocManager('http://localhost:7474/db/suite', auto_commit_interval=0)
+    self.docman = DocManager('http://localhost:7474/db/data', auto_commit_interval=0)
 
   def setUp(self):
     self.graph.delete_all()
