@@ -9,9 +9,9 @@ jdk:
   - oraclejdk7
 install:
   - "pip install requests"
-  - "pip3 install mongo-connector"
-  - "pip3 install py2neo"
-  - "pip3 install mongo-orchestration"
+  - "pip install mongo-connector"
+  - "pip install py2neo"
+  - "pip install mongo-orchestration"
 services:
   - mongodb
 env:
