@@ -22,7 +22,7 @@ except IOError:
 packages = find_packages(exclude=("book", "examples", "examples.*", "test", "test.*"))
 package_metadata = {
     "name": "neo4j-doc-manager",
-    "version": "1.0.0.dev",
+    "version": "1.0.0.dev1",
     "description": "Neo4j Doc manager for Mongo Connector",
     "long_description": "Neo4j Doc Manager is a tool that will import data in Mongodb for a " 
                         "Neo4j graph structure, via Mongo-Connector.",
