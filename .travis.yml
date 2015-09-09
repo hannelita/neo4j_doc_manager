@@ -9,6 +9,7 @@ jdk:
   - oraclejdk7
 install:
   - "pip install requests"
+  - "pip install unittest2"
   - "pip install mongo-connector"
   - "pip install py2neo"
   - "pip install mongo-orchestration"
