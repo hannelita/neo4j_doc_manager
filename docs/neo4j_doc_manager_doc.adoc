@@ -365,7 +365,35 @@ None
 
 ==== Delete
 
+It is possible to remove documents from MongoDB my calling ```db.[your_collection].remove()``` method. If you want to remove all the documents from **talks** collection, for example, you should call
+
+```
+db.talks.remove({})
+```
+So let's imagine that we had **two** nodes on talks, previously inserted. Each node has relationships and connected nodes:
+
+* _Document:talks_ - talks is the root node, coming from Mongo Document Collection, with an id that also comes from MongoDB. Non nested Documents are converted into regular properties, such as "room", "topics" and "timeslot" (a common String array).
+* _Document:session_ - Nested Document. Inner key/values are converted into Node properties. Note that the id incoming from root *talks* collection is propagated to this Node. Also, note that this node is labelled as its direct document key, in this case, *session*.
+* _Document:speaker_ - also nested Document.
+* A relationship that connects *talks* and *session* nodes, called **talks_session**,
+* A relationship that connects *talks* and *speaker* nodes, called **talks_speaker**.
+
+
+ By calling ```db.talks.remove({})```, we will remove all **talks** and their relationships and connected nodes. We end up with the removal of all elements listed above.
+
 ===== Removing relationships
 
+When a node will be removed, the nodes created from nested documents will also be removed. Also, all the relationships between these nodes will be deleted, to avoid orphans.
 
+===== Removing nodes with clauses
+
+It is also possible to specify a document parameter that refers to the document that we want to remove. For example, we can run:
+
+```
+db.talks.remove( { room : "Auditorium" }, 1 )
+```
+
+This will remove a single document with **room** marked as **Auditorium**.
+
+The translation will be held the same way for Neo4j - The corresponding **Document::talks** node will be removed with all his nested information.
 
