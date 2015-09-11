@@ -19,10 +19,10 @@ try:
 except IOError:
     pass        # Install without README.md
 
-packages = find_packages(exclude=("book", "examples", "examples.*", "test", "test.*"))
+packages = ["mongo_connector", "mongo_connector.doc_managers"]
 package_metadata = {
     "name": "neo4j-doc-manager",
-    "version": "1.0.0.dev1",
+    "version": "1.0.0.dev4",
     "description": "Neo4j Doc manager for Mongo Connector",
     "long_description": "Neo4j Doc Manager is a tool that will import data in Mongodb for a " 
                         "Neo4j graph structure, via Mongo-Connector.",
@@ -31,10 +31,11 @@ package_metadata = {
     "url": "https://github.com/neo4j-contrib/neo4j_doc_manager.git",
     "entry_points": {
         "console_scripts": [
+            'mongo-connector = mongo_connector.connector:main',
         ],
     },
     "packages": packages,
-    "install_requires": ["requests>=2.5.1"],
+    "install_requires": ["mongo-connector","requests>=2.5.1"],
     "license": "Apache Software License",
     "classifiers": [
         "Development Status :: 5 - Production/Stable",
@@ -47,7 +48,6 @@ package_metadata = {
         "Topic :: Database",
         "Topic :: Software Development",
     ],
-    "zip_safe": False,
 }
 
 

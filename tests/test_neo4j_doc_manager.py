@@ -8,7 +8,7 @@ sys.path[0:0] = [""]
 
 from gridfs import GridFS
 from pymongo import MongoClient
-from py2neo import Graph
+from py2neo import Graph, Node
 
 from tests import unittest, doc_without_id, doc_test, doc_id, doc_array_test, simple_doc, doc_rel, doc_explicit_rel_id
 from mongo_connector.command_helper import CommandHelper
@@ -94,6 +94,21 @@ class Neo4jTestCase(unittest.TestCase):
     self.assertIn("places", result)
     self.assertIn("people", result)
     self.assertIn("Document", result)
+    self.assertEqual(self.graph.size, 1)
+    self.tearDown
+
+  def test_upsert_with_null_reference(self):
+    docc = {'_id': "123a456b", 'session': {'title': 'simpel title'}, 'a_null_prop': None }
+    self.docman.upsert(docc, 'test.nullprop', 1)
+    result = self.graph.node_labels
+    self.assertNotIn("a_null_prop", result)
+    self.assertEqual(self.graph.size, 1)
+    self.tearDown
+
+  def test_upsert_with_multidimensional_list(self):
+    docc = {'_id': "123a456b", 'session': {'title': 'simple title'}, 'multi_lists': [[1,2], [3,4]] }
+    self.docman.upsert(docc, 'test.multilists', 1)
+    result = self.graph.node_labels
     self.assertEqual(self.graph.size, 1)
     self.tearDown
 
