@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*- 
 """Unit tests - Neo4j DocManager."""
 import sys
 import logging
