@@ -19,7 +19,7 @@ class NodesAndRelationshipsBuilder(object):
     self.doc_types.append(doc_type)
     self.parameters = {'_id':id}
     for key in document.keys():
-      if self.is_reference(key, document[key]):
+      if self.is_reference(key):
         self.build_node_with_reference(key, document[key])
         continue
       if document[key] is None:
@@ -49,7 +49,7 @@ class NodesAndRelationshipsBuilder(object):
   def is_dict(self, doc_key):
     return (type(doc_key) is dict)
 
-  def is_reference(self, key, value):
+  def is_reference(self, key):
     return (re.search(r"_id$", key))
 
   def is_multimensional_array(self, doc_key):
