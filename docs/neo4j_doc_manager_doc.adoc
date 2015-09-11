@@ -47,11 +47,7 @@ Please refer to link:https://github.com/10gen-labs/mongo-connector/wiki/FAQ[Mong
 
 Now install neo4j_doc_manager:
 
-```
-pip install neo4j_doc_manager
-```
-
-Or you can clone link:https://github.com/neo4j-contrib/neo4j_doc_manager[neo4j_doc_manager project] and set PYTHONPATH to it's local directory by running:
+Clone link:https://github.com/neo4j-contrib/neo4j_doc_manager[neo4j_doc_manager project] and set PYTHONPATH to it's local directory by running:
 
 ```
 export PYTHONPATH=.

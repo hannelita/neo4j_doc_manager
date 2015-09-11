@@ -14,11 +14,7 @@ pip install mongo-connector
 ```
 Now install neo4j_doc_manager:
 
-```
-pip install neo4j_doc_manager
-```
-
-Or you can clone this repository and set PYTHONPATH to it's local directory by running
+Clone this repository and set PYTHONPATH to it's local directory by running
 ```
 export PYTHONPATH=.
 ```
