@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*- 
 from pkgutil import extend_path
 __path__ = extend_path(__path__, __name__)
 
@@ -5,6 +7,18 @@ __path__ = extend_path(__path__, __name__)
 import logging
 import os
 import sys
+
+
+if sys.version_info[0] == 3:
+    unicode = str
+
+if sys.version_info[:2] == (2, 6):
+    import unittest2 as unittest
+    from unittest2.case import SkipTest
+else:
+    import unittest
+    from unittest.case import SkipTest
+
 
 logging.basicConfig(stream=sys.stdout)
 
@@ -16,13 +30,4 @@ doc_array_test = {'_id': doc_id, 'session': {'title': '12 Years of Spring: An Op
 
 doc_rel = {'_id': doc_id, "name": "Broadway Center", "url": "bc.example.net"}
 doc_explicit_rel_id = {'_id': "3267324ab23847", "name": "Erin", "places_id": doc_id, "url":  "bc.example.net/Erin"}
-
-if sys.version_info[0] == 3:
-  unicode = str
-
-if sys.version_info[:2] == (2, 6):
-  import unittest2 as unittest
-  from unittest2.case import SkipTest
-else:
-  import unittest
-  from unittest.case import SkipTest
+  
