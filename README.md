@@ -12,6 +12,16 @@ First, install mongo-connector:
 ```
 pip install mongo-connector
 ```
+You also must install **py2neo**:
+
+```
+pip install py2neo
+```
+
+(You might need sudo privileges).
+
+Ensure that you have a Neo4j instance up and running.
+
 Now install neo4j_doc_manager:
 
 Clone this repository and set PYTHONPATH to it's local directory by running

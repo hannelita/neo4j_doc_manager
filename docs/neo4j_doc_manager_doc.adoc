@@ -45,6 +45,14 @@ rs.initiate()
 
 Please refer to link:https://github.com/10gen-labs/mongo-connector/wiki/FAQ[Mongo Connector FAQ] for more information. 
 
+You also must install **py2neo**:
+
+```
+pip install py2neo
+```
+
+(You might need sudo privileges).
+
 Now install neo4j_doc_manager:
 
 Clone link:https://github.com/neo4j-contrib/neo4j_doc_manager[neo4j_doc_manager project] and set PYTHONPATH to it's local directory by running:
