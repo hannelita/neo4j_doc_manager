@@ -51,7 +51,7 @@ export NEO4J_AUTH=user:password
 After installing the package or cloning this repository, run:
 
 ```
-mongo-connector -m localhost:27017 -t http://localhost:7474/db/test -d neo4j_doc_manager
+mongo-connector -m localhost:27017 -t http://localhost:7474/db/data -d neo4j_doc_manager
 
 ```
 
