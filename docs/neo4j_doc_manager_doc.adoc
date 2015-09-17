@@ -74,7 +74,7 @@ Ensure that mongo is running a *replica set*. To initiate a replica set start mo
 mongod --replSet myDevReplSet
 ```
 
-Then open [**mongo-shell**](http://docs.mongodb.org/master/tutorial/getting-started-with-the-mongo-shell/) and run:
+Then open link:http://docs.mongodb.org/master/tutorial/getting-started-with-the-mongo-shell[mongo-shell] and run:
 
 ```
 rs.initiate()
