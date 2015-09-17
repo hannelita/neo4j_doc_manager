@@ -37,7 +37,7 @@ Also be sure to have a *replica set* running. Start mongo with:
 ```
 mongod --replSet myDevReplSet
 ```
-Then open **mongo-shell* and run:
+Then open **mongo-shell** and run:
 
 ```
 rs.initiate()
@@ -45,20 +45,32 @@ rs.initiate()
 
 Please refer to link:https://github.com/10gen-labs/mongo-connector/wiki/FAQ[Mongo Connector FAQ] for more information. 
 
-You also must install **py2neo**:
+Now install **neo4j_doc_manager**. You can simply run
 
 ```
-pip install py2neo
+pip install neo4j-doc-manager
 ```
 
 (You might need sudo privileges).
 
-Now install neo4j_doc_manager:
-
-Clone link:https://github.com/neo4j-contrib/neo4j_doc_manager[neo4j_doc_manager project] and set PYTHONPATH to it's local directory by running:
+If **pip** cannot find **neo4j-doc-manager** Pypi package, try running the command with __--pre__ option. This will enable the search for __dev__ packages:
 
 ```
+pip install neo4j-doc-manager --pre
+```
+
+Ensure that you have a Neo4j instance up and running.
+
+
+Or, instead of using __pip__, you can clone this repository and set PYTHONPATH to it's local directory by running
+```
 export PYTHONPATH=.
+```
+
+You also must install **py2neo** if you do not use __pip__:
+
+```
+pip install py2neo
 ```
 
 If you have authentication enabled for Neo4j, be sure to set **NEO4J_AUTH** environment variable, containing your user and password. 

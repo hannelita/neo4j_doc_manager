@@ -6,6 +6,9 @@ try:
     from setuptools import setup, find_packages
     from setuptools.extension import Extension
 except ImportError:
+    from ez_setup import use_setuptools
+    use_setuptools()
+    from setuptools import setup
     from distutils.core import setup, find_packages
     from distutils.extension import Extension
 
@@ -22,7 +25,7 @@ except IOError:
 packages = ["mongo_connector", "mongo_connector.doc_managers"]
 package_metadata = {
     "name": "neo4j-doc-manager",
-    "version": "1.0.0.dev5",
+    "version": "1.0.0.dev10",
     "description": "Neo4j Doc manager for Mongo Connector",
     "long_description": "Neo4j Doc Manager is a tool that will import data in Mongodb for a " 
                         "Neo4j graph structure, via Mongo-Connector.",
@@ -35,7 +38,7 @@ package_metadata = {
         ],
     },
     "packages": packages,
-    "install_requires": ["mongo-connector","requests>=2.5.1"],
+    "install_requires": ['mongo-connector>=2.1','py2neo','requests>=2.5.1'],
     "license": "Apache Software License",
     "classifiers": [
         "Development Status :: 5 - Production/Stable",
