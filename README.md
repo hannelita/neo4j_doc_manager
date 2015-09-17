@@ -8,51 +8,44 @@ The [Neo4j](http://neo4j.com/) Doc Manager takes MongoDB documents and makes it 
 
 You must have Python installed in order to use this project. Python 3 is recommended.
 
-First, install mongo-connector:
-```
-pip install mongo-connector
-```
-Now install neo4j_doc_manager. You can simply run
-
-```
-pip install neo4j-doc-manager
-```
-
-(You might need sudo privileges).
-
-If **pip** cannot find **neo4j-doc-manager** Pypi package, try running the command with __--pre__ option:
+First, install neo4j_doc_manager with pip:
 
 ```
 pip install neo4j-doc-manager --pre
 ```
 
-Ensure that you have a Neo4j instance up and running.
+(You might need sudo privileges).
 
-
-Or, instead of using __pip__, you can clone this repository and set PYTHONPATH to it's local directory by running
-```
-export PYTHONPATH=.
-```
-
-You also must install **py2neo** if you do not use __pip__:
-
-```
-pip install py2neo
-```
+Refer to  [this document](https://github.com/neo4j-contrib/neo4j_doc_manager/blob/master/docs/neo4j_doc_manager_doc.adoc#21-setup) for more information if you experience any difficulties installing with pip. 
 
 ## Using Neo4j Doc Manager
 
-If you have authentication enabled for Neo4j, be sure to set **NEO4J_AUTH** environment variable, containing your user and password. 
+Ensure that you have a Neo4j instance up and running. If you have authentication enabled (version 2.2+) for Neo4j, be sure to set **NEO4J_AUTH** environment variable, containing your user and password. 
 
 ```
 export NEO4J_AUTH=user:password
 ```
 
-After installing the package or cloning this repository, run:
+Ensure that mongo is running a *replica set*. To initiate a replica set start mongo with:
+
+```
+mongod --replSet myDevReplSet
+```
+
+
+Then open [**mongo-shell**](http://docs.mongodb.org/master/tutorial/getting-started-with-the-mongo-shell/) and run:
+
+```
+rs.initiate()
+```
+
+Please refer to link:https://github.com/10gen-labs/mongo-connector/wiki/FAQ[Mongo Connector FAQ] for more information. 
+
+
+Start the mongo-connector service with the following command:
 
 ```
 mongo-connector -m localhost:27017 -t http://localhost:7474/db/data -d neo4j_doc_manager
-
 ```
 
 **-m** provides Mongo endpoint
@@ -60,32 +53,14 @@ mongo-connector -m localhost:27017 -t http://localhost:7474/db/data -d neo4j_doc
 **-d** specifies Neo4j Doc Manager.
 
 
-# Use case
+# Data synchronization
 
-We assume that you will have both Mongo and Neo4j running for your project. The syncronization process must cover both existing and new data.
+With the `neo4j_doc_manager` service running any documents inserted into mongo will be converted into a graph structure and inserted into Neo4j. Neo4j Doc Manager will turn keys into graph nodes. Nested values on each key will become properties.
 
-### Existing data
-Assuming that you might already have information on your Mongo Database, you should migrate these data to Neo4j graph structure.
-For instance, let's consider the following JSON structure for your Mongo information:
-```
-{
-  "session": {
-    "title": "12 Years of Spring: An Open Source Journey",
-    "abstract": "Spring emerged as a core open source project in early 2003 and evolved to a broad portfolio ..."
-  },
-  "topics":  ["keynote", "spring"], 
-  "room": "Auditorium",
-  "timeslot": "Wed 29th, 09:30-10:30",
-  "speaker": {
-    "name": "Juergen Hoeller",
-    "bio": "Juergen Hoeller is co-founder of the Spring Framework open source project and ....",
-    "twitter": "https://twitter.com/springjuergen",
-    "picture": "http://www.springio.net/wp-content/uploads/2014/11/juergen_hoeller-220x220.jpeg"
-  }
-}
-```
-Neo4j Doc Manager will turn keys into graph nodes. Nested values on each key will become properties. 
+To see this in action, insert the following document into mongo using the [mongo-shell](http://docs.mongodb.org/master/tutorial/getting-started-with-the-mongo-shell/):
 
-### New Data
-The current version takes any new information which is committed to Mongo and saves it to Neo4j. Future versions shall contain a more flexible way to handle new information.
+~~~
+db.talks.insert(  { "session": { "title": "12 Years of Spring: An Open Source Journey", "abstract": "Spring emerged as a core open source project in early 2003 and evolved to a broad portfolio of open source projects up until 2015." }, "topics":  ["keynote", "spring"], "room": "Auditorium", "timeslot": "Wed 29th, 09:30-10:30", "speaker": { "name": "Juergen Hoeller", "bio": "Juergen Hoeller is co-founder of the Spring Framework open source project.", "twitter": "https://twitter.com/springjuergen", "picture": "http://www.springio.net/wp-content/uploads/2014/11/juergen_hoeller-220x220.jpeg" } } );
+~~~
 
+This document will be converted to a graph structure and immediately inserted into Neo4j. Refer to [this document](https://github.com/neo4j-contrib/neo4j_doc_manager/blob/master/docs/neo4j_doc_manager_doc.adoc) for more information and examples.
