@@ -39,7 +39,7 @@ Then open [**mongo-shell**](http://docs.mongodb.org/master/tutorial/getting-star
 rs.initiate()
 ```
 
-Please refer to link:https://github.com/10gen-labs/mongo-connector/wiki/FAQ[Mongo Connector FAQ] for more information. 
+Please refer to [Mongo Connector FAQ](https://github.com/10gen-labs/mongo-connector/wiki/FAQ) for more information. 
 
 
 Start the mongo-connector service with the following command:
@@ -49,13 +49,13 @@ mongo-connector -m localhost:27017 -t http://localhost:7474/db/data -d neo4j_doc
 ```
 
 **-m** provides Mongo endpoint
-**-t** provides Neo4j endpoint. Specify the protocol (http) and also the database name (in our example we use __test__)
+**-t** provides Neo4j endpoint. Be sure to specify the protocol (http).
 **-d** specifies Neo4j Doc Manager.
 
 
 # Data synchronization
 
-With the `neo4j_doc_manager` service running any documents inserted into mongo will be converted into a graph structure and inserted into Neo4j. Neo4j Doc Manager will turn keys into graph nodes. Nested values on each key will become properties.
+With the `neo4j_doc_manager` service running, any documents inserted into mongo will be converted into a graph structure and immediately inserted into Neo4j as well. Neo4j Doc Manager will turn keys into graph nodes. Nested values on each key will become properties.
 
 To see this in action, insert the following document into mongo using the [mongo-shell](http://docs.mongodb.org/master/tutorial/getting-started-with-the-mongo-shell/):
 
