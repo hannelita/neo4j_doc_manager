@@ -75,16 +75,24 @@ class DocManager(DocManagerBase):
 
   def update(self, document_id, update_spec, namespace, timestamp):
     doc_id = u(document_id)
-    update_value_list = update_spec['$set']
-    index, doc_type = self._index_and_mapping(namespace)
     tx = self.graph.cypher.begin()
+    index, doc_type = self._index_and_mapping(namespace)
     params_dict = {"doc_id": doc_id}
     set_dict = {}
-    for update_value in update_value_list.keys():
-      set_dict.update({update_value: update_value_list[update_value]})
-    params_dict.update({"set_parameter": set_dict})
-    statement = "MATCH (d:Document:{doc_type}) WHERE d._id={{doc_id}} SET d+={{set_parameter}}".format(doc_type=doc_type)
-    tx.append(statement, params_dict)
+    statement=""
+    for spec in update_spec.keys():
+      if spec=='$set':
+        update_value_list = update_spec['$set']
+        for update_value in update_value_list.keys():
+          set_dict.update({update_value: update_value_list[update_value]})
+        params_dict.update({"set_parameter": set_dict})
+        statement = "MATCH (d:Document:{doc_type}) WHERE d._id={{doc_id}} SET d+={{set_parameter}}".format(doc_type=doc_type)
+        tx.append(statement, params_dict)
+      elif spec=='$unset':
+        update_value_list = update_spec['$unset']
+        for update_value in update_value_list.keys():
+          statement = "MATCH (d:Document:{doc_type} {{ _id: {{doc_id}} }} ) REMOVE d.{remove_parameter} ".format(doc_type=doc_type, remove_parameter=update_value)
+          tx.append(statement, params_dict)
     tx.commit()
 
   def remove(self, document_id, namespace, timestamp):

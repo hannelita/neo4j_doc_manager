@@ -53,6 +53,15 @@ class Neo4jTestCase(unittest.TestCase):
     self.assertIsNot(node, None)
     self.tearDown()
 
+  def test_update_unset_property(self):
+    """Test the update method."""
+    docc = doc_without_id
+    update_spec = {"$unset": {'timeslot': True}}
+    self.docman.update(doc_id, update_spec, 'test.talksunset', 1)
+    node = self.graph.find("talks", "timeslot")
+    self.assertIsNot(node, None)
+    self.tearDown()
+
   def test_update_many_properties(self):
     """Test the update method."""
     docc = doc_without_id

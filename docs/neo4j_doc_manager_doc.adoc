@@ -317,6 +317,47 @@ db.talks.update({ "room": "Auditorium2"}, { $set: { "room": "Auditorium", "times
 
 We will have both properties, _room_ and _timeslot_, updated into the graph.
 
+===== $unset
+
+*$unset* clause updates a single document by removing a property on a document. For example, imagine we have inserted the _talks_ previourly described into _Upsert_ section, and now we want to remove the __timeslot__ property for the talk that has its __room__ as **Auditorium**. We have to run the following instruction:
+
+[source]
+----
+db.talks.update({ room: "Auditorium" }, { $unset: { timeslot:""  } });
+----
+
+This instruction will get the first document in Mongo that matches with the specified criteria and generate an update method call into _Neo4j Doc Manager_. Considering we have a document previously inserted into Mongo by the Upsert example, we will have a single update.
+
+**Updated Nodes by removing a property**
+
+* The node with _room: "Auditorium"_ now will have the property _timeslot_ removed from it.
+
+Let's assume now another talk was added to Mongo:
+
+[source]
+----
+db.talks.insert(  { "session": { "title": "First steps with React", "abstract": "A little about React and how helpful it can be to your projects." }, "topics":  ["keynote", "javascript"], "room": "Auditorium", "timeslot": "Wed 29th, 10:30-11:30", "speaker": { "name": "Peter Hunt", "bio": "Senior Developer.", "twitter": "https://twitter.com/react_developer", "picture": "http://www.reactiospeakers.org/wp-content/uploads/2015/09/peter-220x220.jpeg" } } );
+----
+
+Note that both talks should be held at _Auditorium_. If we run the following command:
+
+[source]
+----
+db.talks.update({ room: "Auditorium" }, { $unset: { timeslot:""  } });
+----
+
+*Only the first document found by Mongo will be updated and have __timeslot__ property removed*. If we want to change all documents, we must use _multi_ parameter, described in the following section.
+
+Many properties can be changed with a single _update_ clause. For example, if we run
+
+[source]
+----
+db.talks.update({ "room": "Auditorium"}, { $unset: { "room": "", "timeslot": "" } })
+----
+
+We will have both properties, _room_ and _timeslot_, updated into the graph.
+
+
 ===== multi
 
 We can update all the documents that match to a following criteria. Following the example above, to update all document _rooms_ to _Auditorium_, we should run:
