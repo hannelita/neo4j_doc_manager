@@ -279,7 +279,7 @@ Update consists into the method that will update information into a document, by
 
 ===== $set
 
-*$set* clause updates a single document. For example, imagine we have inserted the _talks_ previourly described into _Upsert_ section, and now we want to update the *room*, which is *Auditorium*, to *Auditorium2*. We have to run the following instruction:
+*$set* clause updates a single document. For example, imagine we have inserted the _talks_ previously described into _Upsert_ section, and now we want to update the *room*, which is *Auditorium*, to *Auditorium2*. We have to run the following instruction:
 
 [source]
 ----
@@ -319,7 +319,7 @@ We will have both properties, _room_ and _timeslot_, updated into the graph.
 
 ===== $unset
 
-*$unset* clause updates a single document by removing a property on a document. For example, imagine we have inserted the _talks_ previourly described into _Upsert_ section, and now we want to remove the __timeslot__ property for the talk that has its __room__ as **Auditorium**. We have to run the following instruction:
+*$unset* clause updates a single document by removing a property on a document. For example, imagine we have inserted the _talks_ previously described into _Upsert_ section, and now we want to remove the __timeslot__ property for the talk that has its __room__ as **Auditorium**. We have to run the following instruction:
 
 [source]
 ----
@@ -357,6 +357,23 @@ db.talks.update({ "room": "Auditorium"}, { $unset: { "room": "", "timeslot": "" 
 
 We will have both properties, _room_ and _timeslot_, updated into the graph.
 
+===== Updating without $set or $unset
+
+It is also possible to update a document by specifying the entire change desired on it. For example, imagine we have inserted the _talks_ previously described into _Upsert_ section, and now we want to update the document to select the one whose __room__ will be __Auditorium__ and clear all the root data and have only a property called __level__, which value will be __intermediate__. We have to run the following instruction:
+
+[source]
+----
+db.talks.update({ room: "Auditorium" }, { level: "Intermediate"  } );
+----
+
+This instruction will get the first document in Mongo that matches with the specified criteria and generate an update method call into _Neo4j Doc Manager_. Considering we have a document previously inserted into Mongo by the Upsert example, we will have a single update.
+
+**Updated Nodes**
+
+* The node with _room: "Auditorium"_ now will have all it's properties removed and only __level__ property will be created and will remain. So we will have d:Documents:talks with its **_id** and a **level**.
+
+Attention: Calling an update clause without __$set__ or __$unset__ will lead to property overriding, not concatenating with the existing ones.
+
 
 ===== multi
 
@@ -375,7 +392,7 @@ _multi: true_ will update all documents that match the specified clauses. This b
 
 After running the update clause with _multi_ parameter, we end up with:
 
-** Updated Nodes**
+**Updated Nodes**
 
 * The two nodes now have _room_ setted for _Auditorium_.
 
