@@ -10,6 +10,8 @@ import os.path as path, sys
 import bson.json_util
 
 from mongo_connector.doc_managers.nodes_and_relationships_builder import NodesAndRelationshipsBuilder
+from mongo_connector.doc_managers.nodes_and_relationships_updater import NodesAndRelationshipsUpdater
+
 
 from py2neo import Graph, authenticate
 
@@ -77,28 +79,11 @@ class DocManager(DocManagerBase):
     doc_id = u(document_id)
     tx = self.graph.cypher.begin()
     index, doc_type = self._index_and_mapping(namespace)
-    params_dict = {"doc_id": doc_id}
-    set_dict = {}
-    statement=""
-    for spec in update_spec.keys():
-      if spec=='$set':
-        update_value_list = update_spec['$set']
-        for update_value in update_value_list.keys():
-          set_dict.update({update_value: update_value_list[update_value]})
-        params_dict.update({"set_parameter": set_dict})
-        statement = "MATCH (d:Document:{doc_type}) WHERE d._id={{doc_id}} SET d+={{set_parameter}}".format(doc_type=doc_type)
-        tx.append(statement, params_dict)
-      elif spec=='$unset':
-        update_value_list = update_spec['$unset']
-        for update_value in update_value_list.keys():
-          statement = "MATCH (d:Document:{doc_type} {{ _id: {{doc_id}} }} ) REMOVE d.{remove_parameter} ".format(doc_type=doc_type, remove_parameter=update_value)
-          tx.append(statement, params_dict)
-      else:
-        if self.drop_id_spec(spec):
-          set_dict.update({spec: update_spec[spec]})
-        params_dict.update({"set_parameter": set_dict})
-        statement = "MATCH (d:Document:{doc_type}) WHERE d._id={{doc_id}} SET d={{set_parameter}}".format(doc_type=doc_type)      
-        tx.append(statement, params_dict)
+    updater = NodesAndRelationshipsUpdater()
+    updater.run_update(update_spec, doc_id, doc_type)
+    for statement in updater.statements_with_params:
+      key = list(statement.keys())[0]
+      tx.append(key, statement[key])
     tx.commit()
 
   def remove(self, document_id, namespace, timestamp):
@@ -121,15 +106,8 @@ class DocManager(DocManagerBase):
   def get_last_doc(self):
     LOG.error("get last doc")
     
-
   def handle_command(self, doc, namespace, timestamp):
     db = namespace.split('.', 1)[0]
-
-  def drop_id_spec(self, spec):
-    if spec=='_id':
-      return False
-    return True
-
 
   def _index_and_mapping(self, namespace):
     """Helper method for getting the index and type from a namespace."""
