@@ -12,7 +12,7 @@ from gridfs import GridFS
 from pymongo import MongoClient
 from py2neo import Graph, Node
 
-from tests import unittest, doc_without_id, doc_test, doc_id, doc_array_test, simple_doc, doc_rel, doc_explicit_rel_id
+from tests import unittest, double_nested_doc, doc_without_id, doc_test, doc_id, doc_array_test, simple_doc, doc_rel, doc_explicit_rel_id
 from mongo_connector.command_helper import CommandHelper
 from mongo_connector.compat import u
 from mongo_connector.connector import Connector
@@ -23,8 +23,8 @@ from mongo_connector.util import retry_until_ok
 class Neo4jTestCase(unittest.TestCase):
   @classmethod
   def setUpClass(self):
-    self.graph = Graph()
     self.docman = DocManager('http://localhost:7474/db/data', auto_commit_interval=0)
+    self.graph = self.docman.graph
 
   def setUp(self):
     self.graph.delete_all()
@@ -32,6 +32,8 @@ class Neo4jTestCase(unittest.TestCase):
 
   def tearDown(self):
     self.graph.delete_all()
+    self.docman = DocManager('http://localhost:7474/db/data', auto_commit_interval=0)
+    self.graph = self.docman.graph
 
   def test_update(self):
     """Test the update method."""
@@ -89,6 +91,20 @@ class Neo4jTestCase(unittest.TestCase):
     self.assertIn("speaker", result)
     self.assertIn("session", result)
     self.assertIn("Document", result)
+    self.assertEqual(self.graph.size, 2)
+    self.tearDown
+
+  def test_upsert_double_nested(self):
+    docc = double_nested_doc
+    self.docman.upsert(docc, 'test.doublenestedtalks', 1)
+    result = self.graph.node_labels
+    self.assertIn("session", result)
+    self.assertIn("inner", result)
+    self.assertIn("Document", result)
+    inner = self.graph.find_one("inner")['propr']
+    self.assertEqual("abc", inner)
+    outer = self.graph.find_one("doublenestedtalks")['propr']
+    self.assertEqual(None, outer)
     self.assertEqual(self.graph.size, 2)
     self.tearDown
 

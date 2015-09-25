@@ -13,11 +13,10 @@ class NodesAndRelationshipsBuilder(object):
     self.doc_types = []
     self.explicit_ids = {}
     self.build_nodes_query(doc_type, doc, doc_id)
-    self.parameters = {}
     
   def build_nodes_query(self, doc_type, document, id):
     self.doc_types.append(doc_type)
-    self.parameters = {'_id':id}
+    parameters = {'_id':id}
     for key in document.keys():
       if self.is_reference(key):
         self.build_node_with_reference(key, document[key])
@@ -31,11 +30,11 @@ class NodesAndRelationshipsBuilder(object):
           json_key = key + str(document[key].index(json))
           self.build_nodes_query(json_key, json, id)
       elif self.is_multimensional_array(document[key]):
-        self.flatenned_property(key, document[key])
+        parameters.update(self.flatenned_property(key, document[key]))
       else:
-        self.parameters.update({ key: document[key] })
+        parameters.update({ key: document[key] })
     query = "CREATE (c:Document:{doc_type} {{parameters}})".format(doc_type=doc_type)
-    self.query_nodes.update({query: self.parameters})
+    self.query_nodes.update({query: parameters})
 
   def build_node_with_reference(self, key, document_key):
     if document_key is None:
@@ -56,6 +55,7 @@ class NodesAndRelationshipsBuilder(object):
     return ((type(doc_key) is list) and (doc_key) and (type(doc_key[0]) is list))
 
   def flatenned_property(self, key, doc_key):
+    parameters = {}
     flattened_list = doc_key
     if ((type(flattened_list[0]) is list) and (flattened_list[0])):
       inner_list = flattened_list[0]
@@ -65,7 +65,8 @@ class NodesAndRelationshipsBuilder(object):
       else: 
         for element in flattened_list:
           element_key = key + str(flattened_list.index(element))
-          self.parameters.update({ element_key: element })
+          parameters.update({ element_key: element })
+    return parameters
 
   def is_json_array(self, doc_key):
     return ((type(doc_key) is list) and (doc_key) and (type(doc_key[0]) is dict))
