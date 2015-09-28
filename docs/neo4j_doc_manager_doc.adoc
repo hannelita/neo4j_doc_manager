@@ -442,6 +442,88 @@ None
 * _Document:session_ - Node created from Nested Document.
 * _Document:speaker_ - also nested Document.
 
+===== Creating new nodes by an update action
+
+We can also invoke an update action that contains a nested Document. For example, imagine that we have the following document in Mongo, that we have been using in the past examples:
+
+[source, javascript]
+----
+{
+  "session": {
+    "title": "12 Years of Spring: An Open Source Journey",
+    "abstract": "Spring emerged as a core open source project in early 2003 and evolved to a broad portfolio of open source projects up until 2015."
+  },
+  "topics":  ["keynote", "spring"], 
+  "tracks": [{ "main":"Java" }, { "second":"Languages" }],
+  "room": "Auditorium",
+  "timeslot": "Wed 29th, 09:30-10:30",
+  "speaker": {
+    "name": "Juergen Hoeller",
+    "bio": "Juergen Hoeller is co-founder of the Spring Framework open source project.",
+    "twitter": "https://twitter.com/springjuergen",
+    "picture": "http://www.springio.net/wp-content/uploads/2014/11/juergen_hoeller-220x220.jpeg"
+  }
+}
+----
+
+And then we run the following instruction:
+
+[source]
+----
+db.talks.update({ room: "Auditorium" }, { $set: { conference: { name: "GraphConnect", city: "London" }  } });
+----
+
+At Neo4j, we have:
+
+**Nodes:** 
+
+* _Document:talks_ - talks is the root node, coming from Mongo Document Collection, with an id that also comes from MongoDB. Non nested Documents are converted into regular properties, such as "room", "topics" and "timeslot" (a common String array).
+* _Document:session_ - Nested Document. Inner key/values are converted into Node properties. Note that the id incoming from root *talks* collection is propagated to this Node. Also, note that this node is labelled as its direct document key, in this case, *session*.
+* _Document:speaker_ - also nested Document.
+
+**Relationships:**
+
+* A relationship that connects *talks* and *session* nodes, called **talks_session**,
+* A relationship that connects *talks* and *speaker* nodes, called **talks_speaker**.
+
+
+This will cause the following update in Mongo:
+
+[source, javascript]
+----
+{
+  "session" : {
+    "title" : "12 Years of Spring: An Open Source Journey",
+    "abstract" : "Spring emerged as a core open source project in early 2003 and evolved to a broad portfolio of open source projects up until 2015."
+  },
+  "topics" : [
+    "keynote",
+    "spring"
+  ],
+  "room" : "Auditorium",
+  "timeslot" : "Wed 29th, 09:30-10:30",
+  "speaker" : {
+    "name" : "Juergen Hoeller",
+    "bio" : "Juergen Hoeller is co-founder of the Spring Framework open source project.",
+    "twitter" : "https://twitter.com/springjuergen",
+    "picture" : "http://www.springio.net/wp-content/uploads/2014/11/juergen_hoeller-220x220.jpeg"
+  },
+  "conference" : {
+    "name" : "GraphConnect",
+    "city" : "London"
+  }
+}
+----
+
+Note that the nested document __conference__ has been inserted. This will be translated as a new node and a new relationship into Neo4j:
+
+**Created by update action Nodes:** 
+
+* _Document:conference_ - Simple node with the properties __name__ and __city__.
+
+**Created by update action Relationchips:** 
+
+* A relationship that connects *talks* and *conference* nodes, called **talks_conference**
 
 ==== Delete
 
