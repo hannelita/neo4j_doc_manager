@@ -36,7 +36,7 @@ class Neo4jTestCase(unittest.TestCase):
     self.graph = self.docman.graph
 
   def test_update(self):
-    """Test the update method."""
+    """Test the update method. Simple cause, single parameter to update with set"""
     docc = doc_test
     update_spec = {"$set": {'room': 'Auditorium2'}}
     self.docman.update(doc_id, update_spec, 'test.talks', 1)
@@ -46,7 +46,7 @@ class Neo4jTestCase(unittest.TestCase):
     self.tearDown()
 
   def test_update_new_property(self):
-    """Test the update method."""
+    """Test the update method. Set creating a new property"""
     docc = doc_without_id
     update_spec = {"$set": {'room': 'Auditorium2', 'level': 'intermediate'}}
     self.docman.update(doc_id, update_spec, 'test.talkss', 1)
@@ -56,16 +56,16 @@ class Neo4jTestCase(unittest.TestCase):
     self.tearDown()
 
   def test_update_empty(self):
-    """Test the update method."""
+    """Test the update method. No set or unset; all older properties must be erased"""
     docc = doc_without_id
     update_spec = {'level': 'intermediate'}
     self.docman.update(doc_id, update_spec, 'test.talkss', 1)
-    node = self.graph.find("talks", "level", "intermediate")
-    self.assertIsNot(node, None)
+    node = self.graph.find_one("talkss", "room", "Auditorium")
+    self.assertEqual(node, None)
     self.tearDown()
 
   def test_update_unset_property(self):
-    """Test the update method."""
+    """Test the update method. Simple case test for unset"""
     docc = doc_without_id
     update_spec = {"$unset": {'timeslot': True}}
     self.docman.update(doc_id, update_spec, 'test.talksunset', 1)
@@ -74,7 +74,7 @@ class Neo4jTestCase(unittest.TestCase):
     self.tearDown()
 
   def test_update_many_properties(self):
-    """Test the update method."""
+    """Test the update method. Many properties being sent at once"""
     docc = doc_without_id
     update_spec = {"$set": {'room': 'Auditorium2', 'timeslot': 'Wed 29th, 09:00-10:30'}}
     self.docman.update(doc_id, update_spec, 'test.talkss', 1)
@@ -83,16 +83,33 @@ class Neo4jTestCase(unittest.TestCase):
     self.assertIsNot(node, None)
     self.tearDown()
 
+  def test_update_nested_properties(self):
+    """Test the update method for nested properties. A new node and a new relationship must be created."""
+    docc = double_nested_doc
+    update_spec = {"$set": {'details': {'model': '14Q3', 'make': 'xyz'}, 'level': 'intermediate'}}
+    self.docman.update(doc_id, update_spec, 'test.talksnesteds', 1)
+    node = self.graph.find("details", "model", "14Q3")
+    self.assertIsNot(node, None)
+    labels = self.graph.node_labels
+    self.assertIn("details", labels)
+    self.tearDown()
+
   def test_upsert(self):
     docc = doc_test
-    self.docman.upsert(docc, 'test.talks', 1)
+    self.docman.upsert(docc, 'test.talksone', 1)
     result = self.graph.node_labels
-    self.assertIn("talks", result)
+    self.assertIn("talksone", result)
     self.assertIn("speaker", result)
     self.assertIn("session", result)
     self.assertIn("Document", result)
     self.assertEqual(self.graph.size, 2)
-    self.tearDown
+    root = self.graph.find_one("talksone")['timeslot']
+    self.assertEqual("Wed 29th, 09:30-10:30", root)
+    inner = self.graph.find_one("speaker")['name']
+    self.assertEqual("Juergen Hoeller", inner)
+    inner = self.graph.find_one("session")['title']
+    self.assertEqual("12 Years of Spring: An Open Source Journey", inner)
+    self.tearDown()
 
   def test_upsert_double_nested(self):
     docc = double_nested_doc
@@ -106,9 +123,9 @@ class Neo4jTestCase(unittest.TestCase):
     outer = self.graph.find_one("doublenestedtalks")['propr']
     self.assertEqual(None, outer)
     self.assertEqual(self.graph.size, 2)
-    self.tearDown
+    self.tearDown()
 
-  def test_upsert_with_explicit_id(self):
+  def test_upsert_with_json_array(self):
     docc = doc_array_test
     self.docman.upsert(docc, 'test.talks', 1)
     result = self.graph.node_labels
@@ -119,13 +136,13 @@ class Neo4jTestCase(unittest.TestCase):
     self.assertIn("session", result)
     self.assertIn("Document", result)
     self.assertEqual(self.graph.size, 4)
-    self.tearDown
+    self.tearDown()
 
-  def test_upsert_with_json_array(self):
+  def test_upsert_with_explicit_id(self):
     docc = doc_rel
     self.docman.upsert(docc, 'test.places', 1)
-    docc = doc_explicit_rel_id
-    self.docman.upsert(docc, 'test.people', 1)
+    docc2 = doc_explicit_rel_id
+    self.docman.upsert(docc2, 'test.people', 1)
     result = self.graph.node_labels
     self.assertIn("places", result)
     self.assertIn("people", result)

@@ -8,11 +8,14 @@ import logging
 LOG = logging.getLogger(__name__)
 
 class NodesAndRelationshipsBuilder(object):
-  def __init__(self, doc, doc_type, doc_id):
+  def __init__(self, doc, doc_type, doc_id, doc_types=[]):
+    self.doc_id = doc_id
     self.query_nodes = {}
-    self.doc_types = []
+    self.relationships_query = {}
+    self.doc_types = doc_types or []
     self.explicit_ids = {}
     self.build_nodes_query(doc_type, doc, doc_id)
+    self.build_relationships()
     
   def build_nodes_query(self, doc_type, document, id):
     self.doc_types.append(doc_type)
@@ -34,7 +37,7 @@ class NodesAndRelationshipsBuilder(object):
       else:
         parameters.update({ key: document[key] })
     query = "CREATE (c:Document:{doc_type} {{parameters}})".format(doc_type=doc_type)
-    self.query_nodes.update({query: parameters})
+    self.query_nodes.update({query: {"parameters":parameters}})
 
   def build_node_with_reference(self, key, document_key):
     if document_key is None:
@@ -42,7 +45,7 @@ class NodesAndRelationshipsBuilder(object):
     doc_type = key.split("_id")[0]
     parameters = {'_id':document_key}
     statement = "MERGE (d:Document:{doc_type} {{ _id: {{parameters}}._id}})".format(doc_type=doc_type)
-    self.query_nodes.update({statement: parameters})
+    self.query_nodes.update({statement: {"parameters":parameters}})
     self.explicit_ids.update({document_key: doc_type})
 
   def is_dict(self, doc_key):
@@ -70,6 +73,17 @@ class NodesAndRelationshipsBuilder(object):
 
   def is_json_array(self, doc_key):
     return ((type(doc_key) is list) and (doc_key) and (type(doc_key[0]) is dict))
+
+  def build_relationships(self):
+    main_type = self.doc_types.pop(0)
+    for node_type in self.doc_types:
+      statement = self.build_relationships_query(main_type, node_type)
+      params = {"doc_id": self.doc_id, "explicit_id": self.doc_id}
+      self.relationships_query.update({statement: params})
+    for explicit_id in self.explicit_ids.keys():
+      statement = self.build_relationships_query(main_type, self.explicit_ids[explicit_id])
+      params = {"doc_id": self.doc_id, "explicit_id": explicit_id}
+      self.relationships_query.update({statement: params})
 
   def build_relationships_query(self, main_type, node_type):
     relationship_type = main_type + "_" + node_type
