@@ -30,6 +30,8 @@ class NodesAndRelationshipsUpdater(object):
       elif spec=='$unset':
         update_value_list = update_spec['$unset']
         for update_value in update_value_list.keys():
+          statement = "MATCH (d:Document:{doc_type}), (c:Document:{update_value}) WHERE d._id={{doc_id}} OPTIONAL MATCH (d)-[r]-(c) DELETE r, c;".format(doc_type=doc_type, update_value=update_value)
+          self.statements_with_params.append({statement: params_dict})
           statement = "MATCH (d:Document:{doc_type} {{ _id: {{doc_id}} }} ) REMOVE d.{remove_parameter} ".format(doc_type=doc_type, remove_parameter=update_value)
           self.statements_with_params.append({statement: params_dict})
       else:

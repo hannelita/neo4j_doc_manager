@@ -357,6 +357,15 @@ db.talks.update({ "room": "Auditorium"}, { $unset: { "room": "", "timeslot": "" 
 
 We will have both properties, _room_ and _timeslot_, updated into the graph.
 
+__$unset__ can also remove connected nodes and relationships. Assuming our default __talks__ example, if we run:
+
+[source]
+----
+db.talks.update({ room: "Auditorium" }, { $unset: { session:""  } });
+----
+
+In Neo4j it will cause a removal of the node with the label __session__ for the room with the property __Auditorium__ and also the removal os the relationship connecting __talks__ and __session__.
+
 ===== Updating without $set or $unset (document replacement)
 
 It is also possible to update a document by specifying the entire change desired on it. For example, imagine we have inserted the _talks_ previously described into _Upsert_ section, and now we want to update the document to select the one whose __room__ will be __Auditorium__ and clear all the root data and have only a property called __level__, which value will be __intermediate__. We have to run the following instruction:

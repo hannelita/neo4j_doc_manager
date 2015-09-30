@@ -31,6 +31,7 @@ class Neo4jTestCase(unittest.TestCase):
     return
 
   def tearDown(self):
+    self.docman.graph.delete_all()
     self.graph.delete_all()
     self.docman = DocManager('http://localhost:7474/db/data', auto_commit_interval=0)
     self.graph = self.docman.graph
@@ -69,8 +70,17 @@ class Neo4jTestCase(unittest.TestCase):
     docc = doc_without_id
     update_spec = {"$unset": {'timeslot': True}}
     self.docman.update(doc_id, update_spec, 'test.talksunset', 1)
-    node = self.graph.find("talks", "timeslot")
-    self.assertIsNot(node, None)
+    node = self.graph.find_one("talksunset", "timeslot")
+    self.assertIs(node, None)
+    self.tearDown()
+  
+  def test_update_unset_removing_node(self):
+    """Test the update method. Unset clause removing nested node and relationship"""
+    docc = doc_without_id
+    update_spec = {u'$unset': {u'session': True}}
+    self.docman.update(doc_id, update_spec, 'test.talksunsetcomposite', 1)
+    node = self.graph.find_one("talksunsetcomposite")
+    self.assertIs(node, None)
     self.tearDown()
 
   def test_update_many_properties(self):
