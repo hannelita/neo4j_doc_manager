@@ -94,6 +94,32 @@ class Neo4jTestCase(unittest.TestCase):
     self.assertIn("details", labels)
     self.tearDown()
 
+  def test_update_relationship_simple_removal(self):
+    """Test the update method without set or unset (doc will be replaced). Simple nested doc is being passed"""
+    docc = double_nested_doc
+    update_spec = {u'conference': {u'city': u'London', u'name': u'GraphConnect'}}
+    self.docman.update(doc_id, update_spec, 'test.talksupdate', 1)
+    node = self.graph.find("conference", "city", "London")
+    self.assertIsNot(node, None)
+    labels = self.graph.node_labels
+    self.assertIn("conference", labels)
+    self.assertIn("talks", labels)
+    self.tearDown()
+
+  def test_update_relationship_composite_removal(self):
+    """Test the update method without set or unset (doc will be replaced). Nested doc is being passed plus an extra arg to the root node"""
+    docc = double_nested_doc
+    update_spec = {u'conference': {u'city': u'London', u'name': u'GraphConnect'}, u'level': u'intermediate'}
+    self.docman.update(doc_id, update_spec, 'test.talksupdatecomposite', 1)
+    node = self.graph.find("conference", "city", "London")
+    self.assertIsNot(node, None)
+    talks = self.graph.find("talksupdatecomposite", "level", "intermediate")
+    self.assertIsNot(talks, None)
+    labels = self.graph.node_labels
+    self.assertIn("conference", labels)
+    self.assertIn("talks", labels)
+    self.tearDown()
+
   def test_upsert(self):
     docc = doc_test
     self.docman.upsert(docc, 'test.talksone', 1)
