@@ -103,7 +103,6 @@ class Neo4jTestCase(unittest.TestCase):
     self.assertIsNot(node, None)
     labels = self.graph.node_labels
     self.assertIn("conference", labels)
-    self.assertIn("talks", labels)
     self.tearDown()
 
   def test_update_relationship_composite_removal(self):
@@ -117,7 +116,6 @@ class Neo4jTestCase(unittest.TestCase):
     self.assertIsNot(talks, None)
     labels = self.graph.node_labels
     self.assertIn("conference", labels)
-    self.assertIn("talks", labels)
     self.tearDown()
 
   def test_upsert(self):
