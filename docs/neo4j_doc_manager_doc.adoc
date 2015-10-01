@@ -357,7 +357,16 @@ db.talks.update({ "room": "Auditorium"}, { $unset: { "room": "", "timeslot": "" 
 
 We will have both properties, _room_ and _timeslot_, updated into the graph.
 
-===== Updating without $set or $unset
+__$unset__ can also remove connected nodes and relationships. Assuming our default __talks__ example, if we run:
+
+[source]
+----
+db.talks.update({ room: "Auditorium" }, { $unset: { session:""  } });
+----
+
+In Neo4j it will cause a removal of the node with the label __session__ for the room with the property __Auditorium__ and also the removal os the relationship connecting __talks__ and __session__.
+
+===== Updating without $set or $unset (document replacement)
 
 It is also possible to update a document by specifying the entire change desired on it. For example, imagine we have inserted the _talks_ previously described into _Upsert_ section, and now we want to update the document to select the one whose __room__ will be __Auditorium__ and clear all the root data and have only a property called __level__, which value will be __intermediate__. We have to run the following instruction:
 
@@ -372,8 +381,47 @@ This instruction will get the first document in Mongo that matches with the spec
 
 * The node with _room: "Auditorium"_ now will have all it's properties removed and only __level__ property will be created and will remain. So we will have d:Documents:talks with its **_id** and a **level**.
 
+**Updated Relationships**
+
+* By running the previous statement, all the connected nodes and relationships will be removed. We will end up with a single node, without any relationship.
+
 Attention: Calling an update clause without __$set__ or __$unset__ will lead to property overriding, not concatenating with the existing ones.
 
+It is also possible to run an update clause that contains a nested document as an argument:
+
+[source]
+----
+db.talks.update({ room: "Auditorium" },  { conference: { name: "GraphConnect", city: "London" }   });
+----
+
+This instruction will remove all the properties from the __talks__ node (but it will still being the root node). A new node, with the label __conference__, will be created. Also, a relationship between __talks__ and __conference__ will be made:
+
+**Updated Nodes**
+
+* The node with _room: "Auditorium"_ now will have all it's properties removed. So we will have d:Documents:talks with its **_id** only, with any remaining property. All the connected nodes (__session__ and __speaker__) and its properties will be removed.
+* A new node, **Document::conference**, will be created, with the properties __name__ and __city__.
+
+**Updated Relationships**
+
+* By running the previous statement, all the connected nodes and relationships will be removed from the original __talks__ node. A new relationship between __talks__ and __conference__ will be made.
+
+We can also run a composite update clause where we create a new node and also update the root node:
+
+[source]
+----
+db.talks.update({ room: "Auditorium" },  { conference: { name: "GraphConnect", city: "London" }, level: "intermediate"   });
+----
+
+This instruction will remove all the properties from the __talks__ node (but it will still being the root node). It will also create a **level** property on __talks__, with **intermediate** value. A new node, with the label __conference__, will be created. Also, a relationship between __talks__ and __conference__ will be made:
+
+**Updated Nodes**
+
+* The node with _room: "Auditorium"_ now will have all it's properties removed. So we will have d:Documents:talks with its **_id** and a new property, **level**. All the connected nodes (__session__ and __speaker__) and its properties will be removed.
+* A new node, **Document::conference**, will be created, with the properties __name__ and __city__.
+
+**Updated Relationships**
+
+* By running the previous statement, all the connected nodes and relationships will be removed from the original __talks__ node. A new relationship between __talks__ and __conference__ will be made.
 
 ===== multi
 
@@ -432,9 +480,9 @@ db.talks.update({ "room": "Auditorium4"}, { $set: { "session": { "title": "Intro
 
 A new document will be inserted into Mongo and a new group of nodes and relationships will be inserted into Neo4j. SO, after running the above query, we will have:
 
-** Update nodes **
+**Update nodes**
 
-None
+* None
 
 **Inserted nodes**
 

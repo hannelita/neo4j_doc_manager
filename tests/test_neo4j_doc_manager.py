@@ -31,6 +31,7 @@ class Neo4jTestCase(unittest.TestCase):
     return
 
   def tearDown(self):
+    self.docman.graph.delete_all()
     self.graph.delete_all()
     self.docman = DocManager('http://localhost:7474/db/data', auto_commit_interval=0)
     self.graph = self.docman.graph
@@ -69,8 +70,17 @@ class Neo4jTestCase(unittest.TestCase):
     docc = doc_without_id
     update_spec = {"$unset": {'timeslot': True}}
     self.docman.update(doc_id, update_spec, 'test.talksunset', 1)
-    node = self.graph.find("talks", "timeslot")
-    self.assertIsNot(node, None)
+    node = self.graph.find_one("talksunset", "timeslot")
+    self.assertIs(node, None)
+    self.tearDown()
+  
+  def test_update_unset_removing_node(self):
+    """Test the update method. Unset clause removing nested node and relationship"""
+    docc = doc_without_id
+    update_spec = {u'$unset': {u'session': True}}
+    self.docman.update(doc_id, update_spec, 'test.talksunsetcomposite', 1)
+    node = self.graph.find_one("talksunsetcomposite")
+    self.assertIs(node, None)
     self.tearDown()
 
   def test_update_many_properties(self):
@@ -92,6 +102,30 @@ class Neo4jTestCase(unittest.TestCase):
     self.assertIsNot(node, None)
     labels = self.graph.node_labels
     self.assertIn("details", labels)
+    self.tearDown()
+
+  def test_update_relationship_simple_removal(self):
+    """Test the update method without set or unset (doc will be replaced). Simple nested doc is being passed"""
+    docc = double_nested_doc
+    update_spec = {u'conference': {u'city': u'London', u'name': u'GraphConnect'}}
+    self.docman.update(doc_id, update_spec, 'test.talksupdate', 1)
+    node = self.graph.find("conference", "city", "London")
+    self.assertIsNot(node, None)
+    labels = self.graph.node_labels
+    self.assertIn("conference", labels)
+    self.tearDown()
+
+  def test_update_relationship_composite_removal(self):
+    """Test the update method without set or unset (doc will be replaced). Nested doc is being passed plus an extra arg to the root node"""
+    docc = double_nested_doc
+    update_spec = {u'conference': {u'city': u'London', u'name': u'GraphConnect'}, u'level': u'intermediate'}
+    self.docman.update(doc_id, update_spec, 'test.talksupdatecomposite', 1)
+    node = self.graph.find("conference", "city", "London")
+    self.assertIsNot(node, None)
+    talks = self.graph.find("talksupdatecomposite", "level", "intermediate")
+    self.assertIsNot(talks, None)
+    labels = self.graph.node_labels
+    self.assertIn("conference", labels)
     self.tearDown()
 
   def test_upsert(self):
