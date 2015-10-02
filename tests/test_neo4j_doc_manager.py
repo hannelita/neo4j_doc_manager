@@ -12,7 +12,7 @@ from gridfs import GridFS
 from pymongo import MongoClient
 from py2neo import Graph, Node
 
-from tests import unittest, double_nested_doc, doc_without_id, doc_test, doc_id, doc_array_test, simple_doc, doc_rel, doc_explicit_rel_id
+from tests import unittest, doc_test_double_nested, double_nested_doc, doc_without_id, doc_test, doc_id, doc_array_test, simple_doc, doc_rel, doc_explicit_rel_id
 from mongo_connector.command_helper import CommandHelper
 from mongo_connector.compat import u
 from mongo_connector.connector import Connector
@@ -104,6 +104,18 @@ class Neo4jTestCase(unittest.TestCase):
     self.assertIn("details", labels)
     self.tearDown()
 
+  def test_update_inner_nested_properties(self):
+    """Test the update method for nested properties. A new node and a new relationship must be created. Also tests inner node chain"""
+    docc = double_nested_doc
+    update_spec = {u'$set': {u'test': {u'city': u'London', u'outer': {u'level': u'two'}, u'level': u'One'}}}
+    self.docman.update(doc_id, update_spec, 'test.talksinnernesteds', 1)
+    node = self.graph.find("test", "city", "London")
+    self.assertIsNot(node, None)
+    labels = self.graph.node_labels
+    self.assertIn("test", labels)
+    self.assertIn("outer", labels)
+    self.tearDown()
+
   def test_update_relationship_simple_removal(self):
     """Test the update method without set or unset (doc will be replaced). Simple nested doc is being passed"""
     docc = double_nested_doc
@@ -157,6 +169,18 @@ class Neo4jTestCase(unittest.TestCase):
     outer = self.graph.find_one("doublenestedtalks")['propr']
     self.assertEqual(None, outer)
     self.assertEqual(self.graph.size, 2)
+    self.tearDown()
+
+  def test_upsert_inner_nested(self):
+    docc = doc_test_double_nested
+    self.docman.upsert(docc, 'test.innernestedtalks', 1)
+    result = self.graph.node_labels
+    self.assertIn("session", result)
+    self.assertIn("conference", result)
+    self.assertIn("Document", result)
+    node = self.graph.find("conference", "city", "London")
+    self.assertIsNot(node, None)
+    self.assertEqual(self.graph.size, 3)
     self.tearDown()
 
   def test_upsert_with_json_array(self):
