@@ -78,8 +78,8 @@ class DocManager(DocManagerBase):
     updater = NodesAndRelationshipsUpdater()
     updater.run_update(update_spec, doc_id, doc_type)
     for statement in updater.statements_with_params:
-      key = list(statement.keys())[0]
-      tx.append(key, statement[key])
+      for key in statement.keys():
+        tx.append(key, statement[key])
     tx.commit()
 
   def remove(self, document_id, namespace, timestamp):

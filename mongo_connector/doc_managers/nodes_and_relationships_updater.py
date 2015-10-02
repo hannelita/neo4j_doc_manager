@@ -44,6 +44,7 @@ class NodesAndRelationshipsUpdater(object):
     for spec in update_spec.keys():
       if self.drop_id_spec(spec):
         if (self.is_relationship_update(update_spec[spec])):
+          self.clear_node(doc_type, doc_id)
           self.update_relationship(update_spec[spec], doc_type, spec, doc_id)
         else:
           params_dict.update({"set_parameter": {spec: update_spec[spec]}})
@@ -54,8 +55,8 @@ class NodesAndRelationshipsUpdater(object):
     return (type(update_param) is dict)
 
   def update_relationship(self, document, root_type, doc_type, doc_id):
-    self.clear_node(root_type, doc_id)
     builder = NodesAndRelationshipsBuilder(document, doc_type, doc_id, [root_type])
+    builder.build_relationships_query(root_type, doc_type, doc_id, doc_id)
     self.statements_with_params.append(builder.query_nodes)
     self.statements_with_params.append(builder.relationships_query)
 
@@ -65,12 +66,8 @@ class NodesAndRelationshipsUpdater(object):
     self.statements_with_params.append({statement: params_dict})
 
   def clear_node(self, doc_type, doc_id):
-    # params_dict = {"doc_id": doc_id}
-    # statement = "MATCH (d:Document:{doc_type}) WHERE d._id={{doc_id}} DELETE d".format(doc_type=doc_type)      
-    # self.statements_with_params.append({statement: params_dict})
     params_dict = {"doc_id": doc_id}
     params_dict.update({"parameters": {"_id": doc_id}})
-    # statement = "CREATE (d:Document:{doc_type} {{parameters}})".format(doc_type=doc_type)
     statement = "MATCH (d:Document:{doc_type}) WHERE d._id={{doc_id}} SET d={{}} SET d={{parameters}}".format(doc_type=doc_type)     
     self.statements_with_params.append({statement: params_dict})
 

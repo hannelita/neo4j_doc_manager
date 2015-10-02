@@ -183,6 +183,55 @@ image::resources/images/graph1.png[]
 * A relationship that connects *talks* and *session* nodes, called **talks_session**,
 * A relationship that connects *talks* and *speaker* nodes, called **talks_speaker**.
 
+The node chain is preserved. For example, imagine that you insert the following document in MongoDB:
+
+[source]
+----
+db.talks.insert(  { "session": { "title": "12 Years of Spring: An Open Source Journey", "abstract": "Spring emerged as a core open source project in early 2003 and evolved to a broad portfolio of open source projects up until 2015.", "conference": { "city": "London" } }, "topics":  ["keynote", "spring"], "room": "Auditorium", "timeslot": "Wed 29th, 09:30-10:30", "speaker": { "name": "Juergen Hoeller", "bio": "Juergen Hoeller is co-founder of the Spring Framework open source project.", "twitter": "https://twitter.com/springjuergen", "picture": "http://www.springio.net/wp-content/uploads/2014/11/juergen_hoeller-220x220.jpeg" } } );
+----
+
+
+[source, json]
+----
+{
+  "_id" : ObjectId("560dd583cf74773fae3fd001"),
+  "session" : {
+    "title" : "12 Years of Spring: An Open Source Journey",
+    "abstract" : "Spring emerged as a core open source project in early 2003 and evolved to a broad portfolio of open source projects up until 2015.",
+    "conference" : {
+      "city" : "London"
+    }
+  },
+  "topics" : [
+    "keynote",
+    "spring"
+  ],
+  "room" : "Auditorium",
+  "timeslot" : "Wed 29th, 09:30-10:30",
+  "speaker" : {
+    "name" : "Juergen Hoeller",
+    "bio" : "Juergen Hoeller is co-founder of the Spring Framework open source project.",
+    "twitter" : "https://twitter.com/springjuergen",
+    "picture" : "http://www.springio.net/wp-content/uploads/2014/11/juergen_hoeller-220x220.jpeg"
+  }
+}
+----
+
+In Neo4j, we will have:
+
+**Created nodes:** 
+
+* _Document:talks_ - talks is the root node, coming from Mongo Document Collection, with an id that also comes from MongoDB. Non nested Documents are converted into regular properties, such as "room", "topics" and "timeslot" (a common String array).
+* _Document:session_ - Nested Document. Inner key/values are converted into Node properties. Note that the id incoming from root *talks* collection is propagated to this Node. Also, note that this node is labelled as its direct document key, in this case, *session*.
+* _Document:speaker_ - also nested Document.
+* _Document:conference_ - a Node that is nested to _session_.
+
+**Created Relationships:**
+
+* A relationship that connects *talks* and *session* nodes, called **talks_session**,
+* A relationship that connects *talks* and *speaker* nodes, called **talks_speaker**.
+* A relationship that connects *session* and *conference* nodes, called **session_conference**.
+
 ===== Case containing a JSON Array
 
 Now let's insert the following data. Note the nested JSON array represented by **tracks**:
