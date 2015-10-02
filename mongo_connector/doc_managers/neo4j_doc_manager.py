@@ -39,8 +39,6 @@ class DocManager(DocManagerBase):
     self.auto_commit_interval = auto_commit_interval
     self.unique_key = unique_key
     self.chunk_size = chunk_size
-    if self.auto_commit_interval not in [None, 0]:
-      self.run_auto_commit()
     self._formatter = DefaultDocumentFormatter()
 
   def apply_id_constraint(self, doc_types):
