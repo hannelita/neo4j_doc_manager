@@ -67,6 +67,7 @@ class DocManager(DocManagerBase):
 
   def bulk_upsert(self, docs, namespace, timestamp):
     """Insert multiple documents into Neo4j."""
+    """Maximum chunk size is 1000. Transaction blocks won't have more than 1000 statements."""
     metadata = { "ns": namespace, "_ts": timestamp }
     tx = self.graph.cypher.begin()
     for doc in docs:
