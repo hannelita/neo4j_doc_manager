@@ -67,7 +67,19 @@ class DocManager(DocManagerBase):
 
   def bulk_upsert(self, docs, namespace, timestamp):
     """Insert multiple documents into Neo4j."""
-    LOG.error("Bulk")
+    metadata = { "ns": namespace, "_ts": timestamp }
+    tx = self.graph.cypher.begin()
+    for doc in docs:
+      index, doc_type = self._index_and_mapping(namespace)
+      doc_id = u(doc.pop("_id"))
+      doc = self._formatter.format_document(doc)
+      builder = NodesAndRelationshipsBuilder(doc, doc_type, doc_id)
+      self.apply_id_constraint(builder.doc_types)
+      for statement in builder.query_nodes.keys():
+        tx.append(statement, builder.query_nodes[statement])
+      for relationship in builder.relationships_query.keys():
+        tx.append(relationship, builder.relationships_query[relationship])
+    tx.commit()
 
   def update(self, document_id, update_spec, namespace, timestamp):
     doc_id = u(document_id)

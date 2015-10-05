@@ -140,6 +140,20 @@ class Neo4jTestCase(unittest.TestCase):
     self.assertIn("conference", labels)
     self.tearDown()
 
+  def test_bulk_test_upsert(self):
+    self.docman.bulk_upsert([], 'test.talksbulk', 1)
+    docs = ({"_id": i} for i in range(1000))
+    self.docman.bulk_upsert(docs, 'test.talksbulk', 1)
+    result = self.graph.node_labels
+    self.assertIn("talksbulk", result)
+    nodes = self.graph.find("talksbulk")
+    total_nodes = 0
+    for i, node in enumerate(nodes):
+        self.assertEqual(node['_id'], str(i))
+        total_nodes += 1
+    self.assertEqual(total_nodes, 1000)
+    self.tearDown()
+
   def test_upsert(self):
     docc = doc_test
     self.docman.upsert(docc, 'test.talksone', 1)
