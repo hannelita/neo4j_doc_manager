@@ -116,6 +116,18 @@ Constructor receives the following arguments:
 
 ===== Authentication
 
+If you have authentication enabled for Neo4j, be sure to set **NEO4J_AUTH** environment variable, containing your user and password. 
+
+```
+export NEO4J_AUTH=<user>:<password>
+```
+
+If authentication is not enabled on Neo4j, no action is required. To disable authentication on Neo4j, go to Neo4j install directory, and then edit __conf/neo4j-server.properties__ :
+
+```
+dbms.security.auth_enabled=false
+```
+
 ==== Upsert
 
 Upsert consists into the method that creates new nodes and relationships given a Mongo Document. The method signature is described as below:
@@ -321,6 +333,20 @@ Note that two documents were inserted, and *people* references *place* explicitl
 **Created Relationships:**
 
 * A relationship that connects *people* and *places* nodes is created due to the property *places_id* on _people_ node. It is called **people_places**.
+
+==== Bulk Upsert
+
+If you already have data inserted on your MongoDB, the first time you run _Neo4j DocManager_ the **bulk_upsert** method will be called. It acts as a normal **upsert**, described in previous section, but all the database actions will be batched in a single transaction.
+
+This will avoid a massive commit into Neo4j if the current Mongo database already has several documents. This will also avoid inconsistencies on an initial import.
+
+Keep in mind that batch_upsert tends to have more performance if you are import a huge amount of data. The key to have this method called is the absence of a file called __oplog.timestamp__. If this file is not present, the document import will happen via __bulk_upsert__.
+
+This can be useful if you call a __mongoimport__ commmand that will bring up a huge amount of data. For this scenario, you could manually remove the __oplog.timestamp__, which is automatically created the first time you call **mongo-connector** command. This file usually lives on the root of your **neo4j-doc-manager** Python Package project. 
+
+Of course you do not have to remove the file. **bulk_upsert** is nor mandatory, but it can help you to achieve a better performance on situations where you have many documents to bring to Neo4j.
+
+__bulk_upsert__ has a maximum chunk size of 1000 transactions. That means any transaction block on Neo4j will have more than 1000 nested statements.
 
 ==== Update
 
