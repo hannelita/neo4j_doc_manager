@@ -231,10 +231,40 @@ class Neo4jTestCase(unittest.TestCase):
     self.tearDown
 
   def test_upsert_with_multidimensional_list(self):
-    docc = {'_id': "123a456b", 'session': {'title': 'simple title'}, 'multi_lists': [[1,2], [3,4]] }
+    docc = {'_id': "123a456b", 'session': {'title': 'simple title'}, 'room': [[1,2], [3,4]] }
     self.docman.upsert(docc, 'test.multilists', 1)
     result = self.graph.node_labels
     self.assertEqual(self.graph.size, 1)
+    self.tearDown
+
+  def test_upsert_with_special_chracter_type(self):
+    docc = {'_id': "123a456b", "session-main": {'title': 'simple title'}, 'room': "Auditorium" }
+    self.docman.upsert(docc, 'test.specialchar', 1)
+    result = self.graph.node_labels
+    self.assertIn("Document", result)
+    self.assertIn("session-main", result)
+    self.assertEqual(self.graph.size, 1)
+    self.tearDown
+ 
+  def test_upsert_with_special_chracter_type_single_backtick(self):
+    docc = {'_id': "123a456b", 'session-main': {'title': 'simple title'}, 'room': "Auditorium" }
+    self.docman.upsert(docc, 'test.specialcharsimple', 1)
+    result = self.graph.node_labels
+    self.assertIn("Document", result)
+    self.assertIn("session-main", result)
+    self.assertEqual(self.graph.size, 1)
+    self.tearDown
+
+  def test_upsert_with_special_chracter_type_on_property(self):
+    docc = {'_id': "123a456b", 'session-main': {'main-title': 'simple title'}, 'room': "Auditorium" }
+    self.docman.upsert(docc, 'test.specialcharproperty', 1)
+    result = self.graph.node_labels
+    self.assertIn("Document", result)
+    self.assertIn("session-main", result)
+    self.assertEqual(self.graph.size, 1)
+    node = self.graph.find("session-main", "main-title", "simple title")
+    for n in node:
+      self.assertIsNot(n["main-title"], "simple title")
     self.tearDown
 
   @unittest.skip("Not implmented yet")
