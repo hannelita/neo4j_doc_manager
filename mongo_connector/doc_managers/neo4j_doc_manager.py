@@ -40,6 +40,7 @@ class DocManager(DocManagerBase):
     self.unique_key = unique_key
     self.chunk_size = chunk_size
     self._formatter = DefaultDocumentFormatter()
+    self.kwargs = kwargs.get("clientOptions")
 
   def apply_id_constraint(self, doc_types):
     for doc_type in doc_types:

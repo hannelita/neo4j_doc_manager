@@ -682,3 +682,190 @@ This will remove a single document with **room** marked as **Auditorium**.
 
 The translation will be held the same way for Neo4j - The corresponding **Document::talks** node will be removed with all his nested information.
 
+
+=== Customising the data to be imported
+
+It is possible to specify which collections should be imported to Neo4j from MongoDB.
+
+When invoking __mongo-connector__ command it is possible to pass **-n** as an argument and list the collections to be imported following the format
+```
+db_name.collection.name
+```
+
+For example, imagine that we switched to a database called __test__ in Mongo:
+```
+use test
+```
+And then we added a document:
+```
+db.talks.insert(  { "room": "Auditorium", "timeslot": "Wed 29th, 09:30-10:30"  } );
+```
+
+By calling __mongo-connector__ without **-n** option, all the namespaces will be imported:
+```
+mongo-connector -m localhost:27017 -t http://localhost:7474/db/data -d neo4j_doc_manager
+```
+
+By specifying a namespace, let's say, **main.files**:
+```
+mongo-connector -m localhost:27017 -t http://localhost:7474/db/data -d neo4j_doc_manager -n main.files
+```
+
+We would not have the **test**.talks** collection listed above imported to Neo4j. We can also specify multiple namespaces:
+
+```
+mongo-connector -m localhost:27017 -t http://localhost:7474/db/data -d neo4j_doc_manager -n main.files,another.collection,test.abc
+```
+If we insert a namespace that was previously excluded, such as test.talks, then the retroactive documents will be inserted into Neo4j:
+```
+mongo-connector -m localhost:27017 -t http://localhost:7474/db/data -d neo4j_doc_manager -n main.files,test.talks
+```
+
+Will cause the previous __talks__ document do be imported into Neo4j graph.
+
+
+==== Customising fields that will be imported
+
+It is also possible to specify the fields from a document that will be imported to Neo4j. Imagine the same document that we mentioned above:
+```
+db.talks.insert(  { "room": "Auditorium", "timeslot": "Wed 29th, 09:30-10:30"  } );
+```
+
+We can filter the **fields** that will be imported specifying the command line parameter __-i__. For example, we can import only __room__ field:
+
+```
+mongo-connector -v -m localhost:27017 -t http://localhost:7474/db/data -d neo4j_doc_manager -i room
+```
+
+For this example, __timeslot__ would not be imported. It is also possible to specify multiple values:
+
+```
+mongo-connector -v -m localhost:27017 -t http://localhost:7474/db/data -d neo4j_doc_manager -i room,timeslot,title
+```
+
+If the specified field does not exist, only the existing ones will be imported. In the example, only __room__ and __timeslot__ will be imported.
+
+It is also possible to combine __-i__ and __-n__ options, such as:
+
+```
+mongo-connector -v -m localhost:27017 -t http://localhost:7474/db/data -d neo4j_doc_manager -n test.talks -i room
+```
+
+Important: All nodes will always have the **_id** property.
+
+===== Nested Documents
+
+Imagine that we have the following document:
+
+```
+db.talks.insert(  { "session": { "title": "12 Years of Spring: An Open Source Journey", "abstract": "Spring emerged as a core open source project in early 2003 and evolved to a broad portfolio of open source projects up until 2015.", "conference": { "city": "London" } }, "topics":  ["keynote", "spring"], "room": "Auditorium", "timeslot": "Wed 29th, 09:30-10:30", "speaker": { "name": "Juergen Hoeller", "bio": "Juergen Hoeller is co-founder of the Spring Framework open source project.", "twitter": "https://twitter.com/springjuergen", "picture": "http://www.springio.net/wp-content/uploads/2014/11/juergen_hoeller-220x220.jpeg" } } );
+```
+
+You can notice that we have nested documents. We can specify only the root level fields that will be imported. For example:
+
+```
+mongo-connector -v -m localhost:27017 -t http://localhost:7474/db/data -d neo4j_doc_manager -n test.talks -i room,session
+```
+
+In Neo4j, we will have:
+
+**Nodes**
+
+* __Document:talks__, with the **_id** and the **room** properties.
+* __Document:session__, with all the properties (__id__, __title__, __abstract__) and with the inner node,
+* __Document:conference__, nested node from session, with all its properties (__id__, __city__)
+
+Note that the nested node __speaker__ was not imported to Neo4j, nor the root level properties __topics__ and __timeslot__.
+
+**Relationships**
+
+* **talks_session**
+* **session_conference**
+
+
+=== Customising the data to be imported via configuration file
+
+It is also possible configure what data will be imported to Neo4j through a configuration file. By passing a JSON such as link:https://github.com/mongodb-labs/mongo-connector/blob/master/config.json[this example] during __mongo-connetor__ startup you can set which namespaces will be included. For example, consider the following file, called **config.json**:
+
+[source, javascript]
+----
+{
+  "__comment__": "Configuration options starting with '__' are disabled",
+  "__comment__": "To enable them, remove the preceding '__'",
+
+  "mainAddress": "localhost:27017",
+  "oplogFile": "oplog.timestamp",
+  "noDump": false,
+  "batchSize": -1,
+  "verbosity": 1,
+  "continueOnError": false,
+
+  "namespaces": {
+    "include": ["test.talks"]
+  },
+
+  "docManagers": [
+    {
+      "docManager": "neo4j_doc_manager",
+      "targetURL": "http://localhost:7474/db/data",
+      "args": { 
+        "clientOptions": {
+          "collection": "talks"
+        }
+      }
+    }
+  ]
+}
+----
+
+Notice that every parameter that starts with **__** is ignored. 
+
+Take a look into **namespaces** key. Within the **include** option, you can specify which namespaces will be imported, such as you do via command line. For this example, if you have data into, let's say, **docs.info**, they will not be imported to Neo4j, unless you explicitly inform the namespace:
+
+```
+"include": ["test.talks", "docs.info"]
+
+```
+
+Just a reminder, the default settings, when nothing is specified, is to import everything that you have into MongoDB.
+
+We can also specify the fields via configuration files:
+
+
+[source, javascript]
+----
+{
+  "__comment__": "Configuration options starting with '__' are disabled",
+  "__comment__": "To enable them, remove the preceding '__'",
+
+  "mainAddress": "localhost:27017",
+  "oplogFile": "oplog.timestamp",
+  "noDump": false,
+  "batchSize": -1,
+  "verbosity": 1,
+  "continueOnError": false,
+
+  "fields": ["session", "timeslot", "title"],
+
+  "namespaces": {
+    "include": ["test.talks"]
+  },
+
+  "docManagers": [
+    {
+      "docManager": "neo4j_doc_manager",
+      "targetURL": "http://localhost:7474/db/data",
+      "args": { 
+        "clientOptions": {
+          "collection": "talks"
+        }
+      }
+    }
+  ]
+}
+----
+
+The same principles that were described into the previous session through command line configuration are applied via configuration file. The key __field__ holds a string array of fields that will be imported.
+
+Just a remainder, you can only specify the fields of the root document and the direct nested documents that will be imported. 
+
