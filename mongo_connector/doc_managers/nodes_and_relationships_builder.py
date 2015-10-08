@@ -37,7 +37,7 @@ class NodesAndRelationshipsBuilder(object):
         parameters.update(self.flatenned_property(key, document[key]))
       else:
         parameters.update({ key: document[key] })
-    query = "CREATE (c:Document:{doc_type} {{parameters}})".format(doc_type=doc_type)
+    query = "CREATE (c:Document:`{doc_type}` {{parameters}})".format(doc_type=doc_type)
     self.query_nodes.update({query: {"parameters":parameters}})
 
   def build_node_with_reference(self, root_type, key, doc_id, document_key):
@@ -45,7 +45,7 @@ class NodesAndRelationshipsBuilder(object):
       return
     doc_type = key.split("_id")[0]
     parameters = {'_id':document_key}
-    statement = "MERGE (d:Document:{doc_type} {{ _id: {{parameters}}._id}})".format(doc_type=doc_type)
+    statement = "MERGE (d:Document:`{doc_type}` {{ _id: {{parameters}}._id}})".format(doc_type=doc_type)
     self.query_nodes.update({statement: {"parameters":parameters}})
     self.build_relationships_query(root_type, doc_type, doc_id, document_key)
     self.explicit_ids.update({document_key: doc_type})
@@ -79,6 +79,6 @@ class NodesAndRelationshipsBuilder(object):
 
   def build_relationships_query(self, main_type, node_type, doc_id, explicit_id):
     relationship_type = main_type + "_" + node_type
-    statement = "MATCH (a:{main_type}), (b:{node_type}) WHERE a._id={{doc_id}} AND b._id ={{explicit_id}} CREATE (a)-[r:{relationship_type}]->(b)".format(main_type=main_type, node_type=node_type, relationship_type=relationship_type)
+    statement = "MATCH (a:`{main_type}`), (b:`{node_type}`) WHERE a._id={{doc_id}} AND b._id ={{explicit_id}} CREATE (a)-[r:`{relationship_type}`]->(b)".format(main_type=main_type, node_type=node_type, relationship_type=relationship_type)
     params = {"doc_id": doc_id, "explicit_id": explicit_id}
     self.relationships_query.update({statement: params})
