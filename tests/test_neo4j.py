@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*- 
 """Integration tests - Neo4j and mongo-connector"""
 import base64
 import os
