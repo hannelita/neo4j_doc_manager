@@ -22,7 +22,7 @@ import requests
 from tests import db_user, db_password
 
 _mo_address = os.environ.get("MO_ADDRESS", "localhost:8889")
-_mongo_start_port = int(os.environ.get("MONGO_PORT", 27019))
+_mongo_start_port = int(os.environ.get("MONGO_PORT", 27017))
 _free_port = itertools.count(_mongo_start_port)
 
 DEFAULT_OPTIONS = {
