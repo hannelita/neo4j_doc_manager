@@ -210,6 +210,32 @@ class Neo4jTestCase(unittest.TestCase):
     self.assertEqual(self.graph.size, 4)
     self.tearDown()
 
+  def test_upsert_json_array_with_null_element(self):
+    docc = {'_id': "abc12213bbb", 'session': {'title': '12 Years of Spring: An Open Source Journey'}, 'room': 'Auditorium', 'topics': ['keynote', 'spring'], "tracks": [{ "main":"Java" }, { "second":"Languages" }, None], 'speaker': {'twitter': 'https://twitter.com/springjuergen', 'name': 'Juergen Hoeller' }, 'timeslot': 'Wed 29th, 09:30-10:30'}
+    self.docman.upsert(docc, 'test.jsonarray', 1)
+    result = self.graph.node_labels
+    self.assertIn("jsonarray", result)
+    self.assertIn("tracks0", result)
+    self.assertIn("tracks1", result)
+    self.assertIn("speaker", result)
+    self.assertIn("session", result)
+    self.assertIn("Document", result)
+    self.assertEqual(self.graph.size, 4)
+    self.tearDown()
+
+  def test_upsert_array_with_null_element(self):
+    docc = {'_id': "abc12213bbb", 'session': {'title': '12 Years of Spring: An Open Source Journey'}, 'room': 'Auditorium', 'topics': ['keynote', None, 'spring', None], 'speaker': {'twitter': 'https://twitter.com/springjuergen', 'name': 'Juergen Hoeller' }, 'timeslot': 'Wed 29th, 09:30-10:30'}
+    self.docman.upsert(docc, 'test.talksarray', 1)
+    result = self.graph.node_labels
+    self.assertIn("talksarray", result)
+    self.assertIn("speaker", result)
+    self.assertIn("session", result)
+    self.assertIn("Document", result)
+    self.assertEqual(self.graph.size, 2)
+    topics = self.graph.find_one("talksarray")['topics']
+    self.assertEqual(topics, ['keynote','spring'])
+    self.tearDown()
+
   def test_upsert_with_explicit_id(self):
     docc = doc_rel
     self.docman.upsert(docc, 'test.places', 1)
