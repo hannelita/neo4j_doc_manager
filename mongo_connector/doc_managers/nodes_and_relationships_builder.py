@@ -42,7 +42,7 @@ class NodesAndRelationshipsBuilder(object):
 
   def format_params(self, params):
     if (type(params) is list):
-      return filter(None, params)
+      return list(filter(None, params))
     return params
 
   def build_node_with_reference(self, root_type, key, doc_id, document_key):
