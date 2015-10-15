@@ -29,16 +29,21 @@ class NodesAndRelationshipsBuilder(object):
         self.build_relationships_query(doc_type, key, id, id)
         self.build_nodes_query(key, document[key], id)
       elif self.is_json_array(document[key]):
-        for json in document[key]:
+        for json in self.format_params(document[key]):
           json_key = key + str(document[key].index(json))
           self.build_relationships_query(doc_type, json_key, id, id)
           self.build_nodes_query(json_key, json, id)
       elif self.is_multimensional_array(document[key]):
         parameters.update(self.flatenned_property(key, document[key]))
       else:
-        parameters.update({ key: document[key] })
+        parameters.update({ key: self.format_params(document[key]) })
     query = "CREATE (c:Document:`{doc_type}` {{parameters}})".format(doc_type=doc_type)
     self.query_nodes.update({query: {"parameters":parameters}})
+
+  def format_params(self, params):
+    if (type(params) is list):
+      return filter(None, params)
+    return params
 
   def build_node_with_reference(self, root_type, key, doc_id, document_key):
     if document_key is None:
