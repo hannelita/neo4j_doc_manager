@@ -734,13 +734,13 @@ db.talks.insert(  { "room": "Auditorium", "timeslot": "Wed 29th, 09:30-10:30"  }
 We can filter the **fields** that will be imported specifying the command line parameter __-i__. For example, we can import only __room__ field:
 
 ```
-mongo-connector -v -m localhost:27017 -t http://localhost:7474/db/data -d neo4j_doc_manager -i room
+mongo-connector -m localhost:27017 -t http://localhost:7474/db/data -d neo4j_doc_manager -i room
 ```
 
 For this example, __timeslot__ would not be imported. It is also possible to specify multiple values:
 
 ```
-mongo-connector -v -m localhost:27017 -t http://localhost:7474/db/data -d neo4j_doc_manager -i room,timeslot,title
+mongo-connector -m localhost:27017 -t http://localhost:7474/db/data -d neo4j_doc_manager -i room,timeslot,title
 ```
 
 If the specified field does not exist, only the existing ones will be imported. In the example, only __room__ and __timeslot__ will be imported.
@@ -748,7 +748,7 @@ If the specified field does not exist, only the existing ones will be imported. 
 It is also possible to combine __-i__ and __-n__ options, such as:
 
 ```
-mongo-connector -v -m localhost:27017 -t http://localhost:7474/db/data -d neo4j_doc_manager -n test.talks -i room
+mongo-connector -m localhost:27017 -t http://localhost:7474/db/data -d neo4j_doc_manager -n test.talks -i room
 ```
 
 Important: All nodes will always have the **_id** property.
@@ -764,7 +764,7 @@ db.talks.insert(  { "session": { "title": "12 Years of Spring: An Open Source Jo
 You can notice that we have nested documents. We can specify only the root level fields that will be imported. For example:
 
 ```
-mongo-connector -v -m localhost:27017 -t http://localhost:7474/db/data -d neo4j_doc_manager -n test.talks -i room,session
+mongo-connector -m localhost:27017 -t http://localhost:7474/db/data -d neo4j_doc_manager -n test.talks -i room,session
 ```
 
 In Neo4j, we will have:
@@ -868,4 +868,16 @@ We can also specify the fields via configuration files:
 The same principles that were described into the previous session through command line configuration are applied via configuration file. The key __field__ holds a string array of fields that will be imported.
 
 Just a remainder, you can only specify the fields of the root document and the direct nested documents that will be imported. 
+
+
+=== Errors and exceptions
+
+If something bad happens during the import, Neo4j Doc Manager should not stop. An error message should be thrown on the terminal. You can have more details by checking the file __mongo-connector.log__. It is also possible to increase the log details by initialising __mongo-connector__ with **-v** option:
+
+```
+mongo-connector -v -m localhost:27017 -t http://localhost:7474/db/data -d neo4j_doc_manager
+```
+
+This activates __verbose__ level. You can have a better explanation about what are the failure points by seraching for __OperationFailed__ on __mongo-connector.log__ file.
+
 
