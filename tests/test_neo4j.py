@@ -153,6 +153,19 @@ class TestNeo4j(Neo4jTestCase):
 
       self.connector.doc_managers[0].graph.delete_all()
 
+    
+    def test_bad_int_value(self):
+      self.conn['test']['test'].insert({'inf': float('inf'), 'nan': float('nan'),
+          'still_exists': True})
+      result_set = self.conn['test']['test'].find_one()
+      self.connector.doc_managers[0].upsert({'_id': str(result_set['_id']), 'inf': float('inf'), 'nan': float('nan'),
+          'still_exists': True }, "test.test", 1)
+      assert_soon(lambda: self._count() > 0)
+      doc = self.neo4j_conn.find_one("test")
+      self.assertNotIn('inf', doc)
+      self.assertNotIn('nan', doc)
+      self.assertTrue(doc['still_exists'])
+      
     # def test_rollback(self):
     #   """Test behavior during a MongoDB rollback.
     #   We force a rollback by adding a doc, killing the primary,
@@ -202,15 +215,6 @@ class TestNeo4j(Neo4jTestCase):
       # find_cursor = retry_until_ok(self.conn['test']['test'].find)
       # self.assertEqual(retry_until_ok(find_cursor.count), 1)
 
-    # def test_bad_int_value(self):
-    #     self.conn.test.test.insert({
-    #         'inf': float('inf'), 'nan': float('nan'),
-    #         'still_exists': True})
-    #     assert_soon(lambda: self._count() > 0)
-    #     for doc in self._search():
-    #         self.assertNotIn('inf', doc)
-    #         self.assertNotIn('nan', doc)
-    #         self.assertTrue(doc['still_exists'])
 
 if __name__ == '__main__':
     unittest.main()

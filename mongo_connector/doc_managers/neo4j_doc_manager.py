@@ -11,9 +11,10 @@ import bson.json_util
 
 from mongo_connector.doc_managers.nodes_and_relationships_builder import NodesAndRelationshipsBuilder
 from mongo_connector.doc_managers.nodes_and_relationships_updater import NodesAndRelationshipsUpdater
-
+from mongo_connector.doc_managers.error_handler import ErrorHandler
 
 from py2neo import Graph, authenticate
+
 
 from mongo_connector import errors
 from mongo_connector.compat import u
@@ -23,6 +24,8 @@ from mongo_connector.util import exception_wrapper, retry_until_ok
 from mongo_connector.doc_managers.doc_manager_base import DocManagerBase
 from mongo_connector.doc_managers.formatters import DefaultDocumentFormatter
 
+errors_handler = ErrorHandler()
+wrap_exceptions = exception_wrapper(errors_handler.error_hash)
 
 LOG = logging.getLogger(__name__)
 
@@ -51,6 +54,7 @@ class DocManager(DocManagerBase):
     """Stop the auto-commit thread."""
     self.auto_commit_interval = None
   
+  @wrap_exceptions
   def upsert(self, doc, namespace, timestamp):
     """Inserts a document into Neo4j."""
     index, doc_type = self._index_and_mapping(namespace)
@@ -66,6 +70,7 @@ class DocManager(DocManagerBase):
       tx.append(relationship, builder.relationships_query[relationship])
     tx.commit()
 
+  @wrap_exceptions
   def bulk_upsert(self, docs, namespace, timestamp):
     """Insert multiple documents into Neo4j."""
     """Maximum chunk size is 1000. Transaction blocks won't have more than 1000 statements."""
@@ -83,6 +88,7 @@ class DocManager(DocManagerBase):
         tx.append(relationship, builder.relationships_query[relationship])
     tx.commit()
 
+  @wrap_exceptions
   def update(self, document_id, update_spec, namespace, timestamp):
     doc_id = u(document_id)
     tx = self.graph.cypher.begin()
@@ -94,6 +100,7 @@ class DocManager(DocManagerBase):
         tx.append(key, statement[key])
     tx.commit()
 
+  @wrap_exceptions
   def remove(self, document_id, namespace, timestamp):
     """Removes a document from Neo4j."""
     doc_id = u(document_id)
