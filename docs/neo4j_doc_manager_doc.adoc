@@ -574,6 +574,14 @@ db.talks.update({ "room": "Auditorium"}, { $set: { "room": "Auditorium2"} }, { m
 
 _multi: true_ will update all documents that match the specified clauses. This behaviour will also be reflected into Neo4j - all Nodes will be updated. So, if before the clause we had:
 
+Before the update:
+
+image::resources/images/graph15.svg[]
+
+After the update:
+
+image::resources/images/graph16.svg[]
+
 **Nodes**
 
 * Two nodes with *room* setted to *Auditorium2*
@@ -597,11 +605,19 @@ db.talks.update({ "room": "Auditorium"}, { $set: { "level": "intermediate"} }, {
 
 After running the update clause, we have:
 
+image::resources/images/graph17.svg[]
+
+
 * The same two nodes labelled as *Document:talks*, now with a _level_ property, containing _"intermediate"_ as its value.
 
 
 
 ===== Creating new documents by an update action
+
+Let's assume the graph below:
+
+image::resources/images/graph1.svg[]
+
 
 If the update clause does not match any document, by default a new document is not created. However, if you pass the parameter _{upsert: true}_, a new document is created. For example, assume we run the following clause:
 
@@ -611,7 +627,12 @@ If the update clause does not match any document, by default a new document is n
 db.talks.update({ "room": "Auditorium4"}, { $set: { "session": { "title": "Introduction to Neo4j", "abstract": "First steps with Neo4j, basic configuration and data modelling." }, "topics":  ["keynote", "databases"], "room": "Auditorium4", "timeslot": "Wed 29th, 13:30-14:30", "speaker": { "name": "Michael Hunger", "bio": "Senior Developer.", "twitter": "https://twitter.com/neo4j" } } })
 ----
 
-At the moment we do not have any document that matches with _room_ _Auditorium4_. If we do not specify anything, nothing is done to Mongo or Neo4j. However, if we specify the _upsert_ as a _true_ parameter,
+At the moment we do not have any document that matches with _room_ _Auditorium4_. If we do not specify anything, nothing is done to Mongo or Neo4j and we end up with a graph identical to the initial one:
+
+image::resources/images/graph1.svg[]
+
+
+However, if we specify the _upsert_ as a _true_ parameter,
 
 [source]
 ----
@@ -619,6 +640,9 @@ db.talks.update({ "room": "Auditorium4"}, { $set: { "session": { "title": "Intro
 ----
 
 A new document will be inserted into Mongo and a new group of nodes and relationships will be inserted into Neo4j. SO, after running the above query, we will have:
+
+image::resources/images/graph18.svg[]
+
 
 **Update nodes**
 
@@ -654,14 +678,10 @@ We can also invoke an update action that contains a nested Document. For example
 }
 ----
 
-And then we run the following instruction:
-
-[source]
-----
-db.talks.update({ room: "Auditorium" }, { $set: { conference: { name: "GraphConnect", city: "London" }  } });
-----
-
 At Neo4j, we have:
+
+image::resources/images/graph1.svg[]
+
 
 **Nodes:** 
 
@@ -674,6 +694,13 @@ At Neo4j, we have:
 * A relationship that connects *talks* and *session* nodes, called **talks_session**,
 * A relationship that connects *talks* and *speaker* nodes, called **talks_speaker**.
 
+
+And then we run the following instruction:
+
+[source]
+----
+db.talks.update({ room: "Auditorium" }, { $set: { conference: { name: "GraphConnect", city: "London" }  } });
+----
 
 This will cause the following update in Mongo:
 
@@ -705,6 +732,9 @@ This will cause the following update in Mongo:
 
 Note that the nested document __conference__ has been inserted. This will be translated as a new node and a new relationship into Neo4j:
 
+image::resources/images/graph19.svg[]
+
+
 **Created by update action Nodes:** 
 
 * _Document:conference_ - Simple node with the properties __name__ and __city__.
@@ -721,6 +751,9 @@ It is possible to remove documents from MongoDB my calling ```db.[your_collectio
 db.talks.remove({})
 ```
 So let's imagine that we had **two** nodes on talks, previously inserted. Each node has relationships and connected nodes:
+
+image::resources/images/graph15.svg[]
+
 
 * _Document:talks_ - talks is the root node, coming from Mongo Document Collection, with an id that also comes from MongoDB. Non nested Documents are converted into regular properties, such as "room", "topics" and "timeslot" (a common String array).
 * _Document:session_ - Nested Document. Inner key/values are converted into Node properties. Note that the id incoming from root *talks* collection is propagated to this Node. Also, note that this node is labelled as its direct document key, in this case, *session*.
@@ -744,6 +777,16 @@ db.talks.remove( { room : "Auditorium" }, 1 )
 ```
 
 This will remove a single document with **room** marked as **Auditorium**.
+
+Before the update:
+
+image::resources/images/graph15.svg[]
+
+
+After the update:
+
+image::resources/images/graph20.svg[]
+
 
 The translation will be held the same way for Neo4j - The corresponding **Document::talks** node will be removed with all his nested information.
 
