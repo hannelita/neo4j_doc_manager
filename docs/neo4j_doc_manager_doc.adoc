@@ -7,19 +7,19 @@ toc::[]
 
 == Our Goal
 
-=== TL;DR
+=== What is Neo4j Doc Manager?
 
-What's Neo4j Doc Manager? It is a tool that enables you to migrate existing documents into MongoDB to a Neo4j graph structure. You just run it in background and the information that is in MongoDB will be imported to a graph.
+It is a tool that enables you to migrate documents from MongoDB to a Neo4j property graph structure. You just run it in background and the information that is in MongoDB will be imported to a graph.
 
 === A little longer explanation
 
-Neo4j is an OLTP graph database which excels at querying data relationships, which is a weakness of other NoSQL and SQL solutions.  We created the Neo4j Doc Manager for the Mongo Connector to allow MongoDB developers to store JSON data in Mongo while querying the relationship between the data using Neo4j.  We call this polyglot persistence - using the database best suited for the type of data and querying your application requires.
+Neo4j is an OLTP graph database which excels at querying data relationships, which is a weakness of other NoSQL and SQL solutions.  We created the Neo4j Doc Manager for Mongo Connector to allow MongoDB developers to store JSON data in Mongo while querying the relationships between the data using Neo4j.  We call this polyglot persistence - using the database best suited for the type of data and querying your application requires.
 
-MongoDB stores data as JSON documents, while Neo4j stores data as graphs.  In order to enable graph-based querying of Mongo data, we need to determine how to map between these two different data structures.  Our initial goal was to implement a default mapping plan, covering the most well-known cases. We wanted to follow convention instead of requiring configuration. We collected some generic Mongo Document structures based on community feedback and structured the mapping based on them. It's important to note that we are opened for further suggestions and improvements.
+MongoDB stores data as JSON-like documents, while Neo4j stores data as property graphs.  In order to enable graph-based querying of MongoDB data, we need to determine how to map between these two different data structures.  Our initial goal was to implement a default mapping plan, covering the most well-known cases. We wanted to follow convention instead of requiring configuration. We collected some generic MongoDB Document structures based on community feedback and structured the mapping based on them. It's important to note that we are open to further suggestions and improvements.
 
 image::https://raw.githubusercontent.com/neo4j-contrib/neo4j_doc_manager/master/docs/resources/images/doc_to_graph.png[]
 
-This project is based upon the link:https://github.com/10gen-labs/mongo-connector[Mongo Connector]. It provides a simple protocol to transfer data from MongoDB to another database. While Mongo publishes Doc Manager implementations for other databases, they did not provide an implementation for Neo4j.  You can grab more detailed information about **mongo-connector** into the official link:https://github.com/10gen-labs/mongo-connector/wiki[Project Wiki].
+This project is based upon the link:https://github.com/10gen-labs/mongo-connector[Mongo Connector]. It provides a simple protocol to transfer data from MongoDB to another database. While Mongo publishes Doc Manager implementations for other databases, they did not provide an implementation for Neo4j.  You can grab more detailed information about **mongo-connector** in the official link:https://github.com/10gen-labs/mongo-connector/wiki[Project Wiki].
 
 The Mongo Connector requires creating a MongoDB link:http://docs.mongodb.org/manual/tutorial/deploy-replica-set/[replica set]. An **OplogThread** thread then will listen to all CUD actions occurring in MongoDB. The **mongo-connector** provides an interface to collect the events caught by the OplogThread. The communication interface is implemented into a structure called **DocManager**, which can properly receive and handle Mongo documents and information about the database and its collections.
 
@@ -67,7 +67,7 @@ pip install py2neo
 
 Ensure that you have a Neo4j instance up and running.
 
-If you have authentication enabled for Neo4j, be sure to set **NEO4J_AUTH** environment variable, containing your user and password. 
+If you have authentication enabled for Neo4j, be sure to set **NEO4J_AUTH** environment variable, containing your username and password.
 
 ```
 export NEO4J_AUTH=<user>:<password>
@@ -121,7 +121,7 @@ Constructor receives the following arguments:
 
 ===== Authentication
 
-If you have authentication enabled for Neo4j, be sure to set **NEO4J_AUTH** environment variable, containing your user and password. 
+If you have authentication enabled for Neo4j, be sure to set **NEO4J_AUTH** environment variable, containing your username and password.
 
 ```
 export NEO4J_AUTH=<user>:<password>
@@ -135,7 +135,7 @@ dbms.security.auth_enabled=false
 
 ==== Upsert
 
-Upsert consists into the method that creates new nodes and relationships given a Mongo Document. The method signature is described as below:
+Upsert describes the method that creates new nodes and relationships given a Mongo Document. The method signature is described as below:
 [source, python]
 ----
 upsert(self, doc, namespace, timestamp):
@@ -151,7 +151,7 @@ Basically we **translate every element of a collection into a new node**. Since 
   ** an array of documents
 * All the other types of data into the document will be translated into node properties.
 
-In terms of relationships, every time we find composite documents, we will stablish a relationship between the root document and the nested document.
+In terms of relationships, every time we find composite documents, we will establish a relationship between the root document and the nested document.
 
 To clarify our scenario, let's imagine an empty MongoDB instance.
 Let's also consider an empty instance of Neo4j.
@@ -173,7 +173,7 @@ This will insert the following document into Mongo:
     "title": "12 Years of Spring: An Open Source Journey",
     "abstract": "Spring emerged as a core open source project in early 2003 and evolved to a broad portfolio of open source projects up until 2015."
   },
-  "topics":  ["keynote", "spring"], 
+  "topics":  ["keynote", "spring"],
   "room": "Auditorium",
   "timeslot": "Wed 29th, 09:30-10:30",
   "speaker": {
@@ -194,7 +194,7 @@ Check the detailed generated graph:
 
 image::https://raw.githubusercontent.com/neo4j-contrib/neo4j_doc_manager/master/docs/resources/images/graph1.png[]
 
-**Created nodes:** 
+**Created nodes:**
 
 * _Document:talks_ - talks is the root node, coming from Mongo Document Collection, with an id that also comes from MongoDB. Non nested Documents are converted into regular properties, such as "room", "topics" and "timeslot" (a common String array).
 * _Document:session_ - Nested Document. Inner key/values are converted into Node properties. Note that the id incoming from root *talks* collection is propagated to this Node. Also, note that this node is labelled as its direct document key, in this case, *session*.
@@ -244,7 +244,7 @@ In Neo4j, we will have:
 image::https://raw.githubusercontent.com/neo4j-contrib/neo4j_doc_manager/master/docs/resources/images/graph2.png[]
 
 
-**Created nodes:** 
+**Created nodes:**
 
 * _Document:talks_ - talks is the root node, coming from Mongo Document Collection, with an id that also comes from MongoDB. Non nested Documents are converted into regular properties, such as "room", "topics" and "timeslot" (a common String array).
 * _Document:session_ - Nested Document. Inner key/values are converted into Node properties. Note that the id incoming from root *talks* collection is propagated to this Node. Also, note that this node is labelled as its direct document key, in this case, *session*.
@@ -272,7 +272,7 @@ db.talks.insert(  { "session": { "title": "12 Years of Spring: An Open Source Jo
     "title": "12 Years of Spring: An Open Source Journey",
     "abstract": "Spring emerged as a core open source project in early 2003 and evolved to a broad portfolio of open source projects up until 2015."
   },
-  "topics":  ["keynote", "spring"], 
+  "topics":  ["keynote", "spring"],
   "tracks": [{ "main":"Java" }, { "second":"Languages" }],
   "room": "Auditorium",
   "timeslot": "Wed 29th, 09:30-10:30",
@@ -318,10 +318,10 @@ db.places.insert({"_id": "32434ab234324", "name": "The cool place", "url": "cool
 
 [source, javascript]
 ----
-{ 
-  "_id": "32434ab234324", 
-  "name": "The cool place", 
-  "url": "cool.example.net" 
+{
+  "_id": "32434ab234324",
+  "name": "The cool place",
+  "url": "cool.example.net"
 }
 ----
 
@@ -333,9 +333,9 @@ db.people.insert({ "name": "Michael", "places_id": "32434ab234324", "url": "neo4
 [source, javascript]
 ----
 {
-  "name": "Michael", 
-  "places_id": "32434ab234324", 
-  "url": "neo4j.com/Michael" 
+  "name": "Michael",
+  "places_id": "32434ab234324",
+  "url": "neo4j.com/Michael"
 }
 ----
 
@@ -359,17 +359,17 @@ If you already have data inserted on your MongoDB, the first time you run _Neo4j
 
 This will avoid a massive commit into Neo4j if the current Mongo database already has several documents. This will also avoid inconsistencies on an initial import.
 
-Keep in mind that batch_upsert tends to have more performance if you are import a huge amount of data. The key to have this method called is the absence of a file called __oplog.timestamp__. If this file is not present, the document import will happen via __bulk_upsert__.
+Keep in mind that batch_upsert tends to have better performance if you are importing a huge amount of data. The key to have this method called is the absence of a file called __oplog.timestamp__. If this file is not present, the document import will happen via __bulk_upsert__.
 
-This can be useful if you call a __mongoimport__ commmand that will bring up a huge amount of data. For this scenario, you could manually remove the __oplog.timestamp__, which is automatically created the first time you call **mongo-connector** command. This file usually lives on the root of your **neo4j-doc-manager** Python Package project. 
+This can be useful if you call a __mongoimport__ commmand that will bring up a huge amount of data. For this scenario, you could manually remove the __oplog.timestamp__, which is automatically created the first time you call **mongo-connector** command. This file usually lives on the root of your **neo4j-doc-manager** Python Package project.
 
-Of course you do not have to remove the file. **bulk_upsert** is nor mandatory, but it can help you to achieve a better performance on situations where you have many documents to bring to Neo4j.
+Of course you do not have to remove the file. **bulk_upsert** is not mandatory, but it can help you to achieve better performance on situations where you have many documents to bring to Neo4j.
 
 __bulk_upsert__ has a maximum chunk size of 1000 transactions. That means any transaction block on Neo4j will have more than 1000 nested statements.
 
 ==== Update
 
-Update consists into the method that will update information into a document, by modifying an existing property or adding a new one; to a single document or multiple ones. The behaviour varies according to the instruction passed to Mongo.
+Update describes the method that will update information into a document, by modifying an existing property or adding a new one; to a single document or multiple ones. The behaviour varies according to the instruction passed to Mongo.
 
 ===== $set
 
@@ -519,7 +519,7 @@ image::https://raw.githubusercontent.com/neo4j-contrib/neo4j_doc_manager/master/
 
 * By running the previous statement, all the connected nodes and relationships will be removed. We will end up with a single node, without any relationship.
 
-Attention: Calling an update clause without __$set__ or __$unset__ will lead to property overriding, not concatenating with the existing ones.
+Note: Calling an update clause without __$set__ or __$unset__ will lead to property overriding, not concatenating with the existing ones.
 
 It is also possible to run an update clause that contains a nested document as an argument. Imagine our default __talks__ example:
 
@@ -553,14 +553,14 @@ We can also run a composite update clause where we create a new node and also up
 db.talks.update({ room: "Auditorium" },  { conference: { name: "GraphConnect", city: "London" }, level: "intermediate"   });
 ----
 
-This instruction will remove all the properties from the __talks__ node (but it will still being the root node). It will also create a **level** property on __talks__, with **intermediate** value. A new node, with the label __conference__, will be created. Also, a relationship between __talks__ and __conference__ will be made:
+This instruction will remove all the properties from the __talks__ node (but it will still be the root node). It will also create a **level** property on __talks__, with **intermediate** value. A new node, with the label __conference__, will be created. Also, a relationship between __talks__ and __conference__ will be made:
 
 image::https://raw.githubusercontent.com/neo4j-contrib/neo4j_doc_manager/master/docs/resources/images/graph14.png[]
 
 
 **Updated Nodes**
 
-* The node with _room: "Auditorium"_ now will have all it's properties removed. So we will have d:Documents:talks with its **_id** and a new property, **level**. All the connected nodes (__session__ and __speaker__) and its properties will be removed.
+* The node with _room: "Auditorium"_ now will have all its properties removed. So we will have d:Documents:talks with its **_id** and a new property, **level**. All the connected nodes (__session__ and __speaker__) and its properties will be removed.
 * A new node, **Document::conference**, will be created, with the properties __name__ and __city__.
 
 **Updated Relationships**
@@ -598,7 +598,7 @@ After running the update clause with _multi_ parameter, we end up with:
 
 ===== Inserting new properties
 
-Update clauses also can be used for inserting new properties into documents. This will impact into a new property for a node. Let's assume the _talks_ previously inserted. Let's set a _level_ property for all the talks that will happen into _Auditorium_ room, pointing that they require an _intermediate_ level. Before running the update clause, we have the following into Neo4j graph:
+Update clauses also can be used for inserting new properties into documents. This will result in a new property for a node. Let's assume the _talks_ previously inserted. Let's set a _level_ property for all the talks that will happen into _Auditorium_ room, pointing that they require an _intermediate_ level. Before running the update clause, we have the following into Neo4j graph:
 
 * Two nodes labelled as *Document:talks* without a _level_ property.
 
@@ -643,12 +643,12 @@ However, if we specify the _upsert_ as a _true_ parameter,
 db.talks.update({ "room": "Auditorium4"}, { $set: { "session": { "title": "Introduction to Neo4j", "abstract": "First steps with Neo4j, basic configuration and data modelling." }, "topics":  ["keynote", "databases"], "room": "Auditorium4", "timeslot": "Wed 29th, 13:30-14:30", "speaker": { "name": "Michael Hunger", "bio": "Senior Developer.", "twitter": "https://twitter.com/neo4j" } } }, {upsert: true})
 ----
 
-A new document will be inserted into Mongo and a new group of nodes and relationships will be inserted into Neo4j. SO, after running the above query, we will have:
+a new document will be inserted into Mongo and a new group of nodes and relationships will be inserted into Neo4j. So, after running the above query, we will have:
 
 image::https://raw.githubusercontent.com/neo4j-contrib/neo4j_doc_manager/master/docs/resources/images/graph18.png[]
 
 
-**Update nodes**
+**Updated nodes**
 
 * None
 
@@ -669,7 +669,7 @@ We can also invoke an update action that contains a nested Document. For example
     "title": "12 Years of Spring: An Open Source Journey",
     "abstract": "Spring emerged as a core open source project in early 2003 and evolved to a broad portfolio of open source projects up until 2015."
   },
-  "topics":  ["keynote", "spring"], 
+  "topics":  ["keynote", "spring"],
   "tracks": [{ "main":"Java" }, { "second":"Languages" }],
   "room": "Auditorium",
   "timeslot": "Wed 29th, 09:30-10:30",
@@ -682,12 +682,12 @@ We can also invoke an update action that contains a nested Document. For example
 }
 ----
 
-At Neo4j, we have:
+In Neo4j, we have:
 
 image::https://raw.githubusercontent.com/neo4j-contrib/neo4j_doc_manager/master/docs/resources/images/graph1.png[]
 
 
-**Nodes:** 
+**Nodes:**
 
 * _Document:talks_ - talks is the root node, coming from Mongo Document Collection, with an id that also comes from MongoDB. Non nested Documents are converted into regular properties, such as "room", "topics" and "timeslot" (a common String array).
 * _Document:session_ - Nested Document. Inner key/values are converted into Node properties. Note that the id incoming from root *talks* collection is propagated to this Node. Also, note that this node is labelled as its direct document key, in this case, *session*.
@@ -739,17 +739,17 @@ Note that the nested document __conference__ has been inserted. This will be tra
 image::https://raw.githubusercontent.com/neo4j-contrib/neo4j_doc_manager/master/docs/resources/images/graph19.png[]
 
 
-**Created by update action Nodes:** 
+**Created by update action Nodes:**
 
 * _Document:conference_ - Simple node with the properties __name__ and __city__.
 
-**Created by update action Relationchips:** 
+**Created by update action Relationchips:**
 
 * A relationship that connects *talks* and *conference* nodes, called **talks_conference**
 
 ==== Delete
 
-It is possible to remove documents from MongoDB my calling ```db.[your_collection].remove()``` method. If you want to remove all the documents from **talks** collection, for example, you should call
+It is possible to remove documents from MongoDB by calling ```db.[your_collection].remove()``` method. If you want to remove all the documents from **talks** collection, for example, you should call
 
 ```
 db.talks.remove({})
@@ -897,7 +897,7 @@ Note that the nested node __speaker__ was not imported to Neo4j, nor the root le
 
 === Customising the data to be imported via configuration file
 
-It is also possible configure what data will be imported to Neo4j through a configuration file. By passing a JSON such as link:https://github.com/mongodb-labs/mongo-connector/blob/master/config.json[this example] during __mongo-connetor__ startup you can set which namespaces will be included. For example, consider the following file, called **config.json**:
+It is also possible to configure what data will be imported to Neo4j through a configuration file. By passing a JSON file such as link:https://github.com/mongodb-labs/mongo-connector/blob/master/config.json[this example] during __mongo-connetor__ startup you can set which namespaces will be included. For example, consider the following file, called **config.json**:
 
 [source, javascript]
 ----
@@ -920,7 +920,7 @@ It is also possible configure what data will be imported to Neo4j through a conf
     {
       "docManager": "neo4j_doc_manager",
       "targetURL": "http://localhost:7474/db/data",
-      "args": { 
+      "args": {
         "clientOptions": {
           "collection": "talks"
         }
@@ -930,7 +930,7 @@ It is also possible configure what data will be imported to Neo4j through a conf
 }
 ----
 
-Notice that every parameter that starts with **__** is ignored. 
+Notice that every parameter that starts with **__** is ignored.
 
 Take a look into **namespaces** key. Within the **include** option, you can specify which namespaces will be imported, such as you do via command line. For this example, if you have data into, let's say, **docs.info**, they will not be imported to Neo4j, unless you explicitly inform the namespace:
 
@@ -967,7 +967,7 @@ We can also specify the fields via configuration files:
     {
       "docManager": "neo4j_doc_manager",
       "targetURL": "http://localhost:7474/db/data",
-      "args": { 
+      "args": {
         "clientOptions": {
           "collection": "talks"
         }
@@ -977,9 +977,9 @@ We can also specify the fields via configuration files:
 }
 ----
 
-The same principles that were described into the previous session through command line configuration are applied via configuration file. The key __field__ holds a string array of fields that will be imported.
+The same principles that were described in the previous session through command line configuration are applied via configuration file. The key __field__ holds a string array of fields that will be imported.
 
-Just a remainder, you can only specify the fields of the root document and the direct nested documents that will be imported. 
+Just a remainder, you can only specify the fields of the root document and the direct nested documents that will be imported.
 
 
 === Errors and exceptions
