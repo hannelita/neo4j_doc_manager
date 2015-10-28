@@ -16,11 +16,11 @@ What's Neo4j Doc Manager? It is a tool that enables you to migrate existing docu
 
 Neo4j is an OLTP graph database which excels at querying data relationships, which is a weakness of other NoSQL and SQL solutions.  We created the Neo4j Doc Manager for the Mongo Connector to allow MongoDB developers to store JSON data in Mongo while querying the relationship between the data using Neo4j.  We call this polyglot persistence - using the database best suited for the type of data and querying your application requires.
 
-MongDB stores data as JSON documents, while Neo4j stores data as graphs.  In order to enable graph-based querying of Mongo data, we need to determine how to map between these two different data structures.  Our initial goal was to implement a default mapping plan, covering the most well-known cases. We wanted to follow convention instead of requiring configuration. We collected some generic Mongo Document structures based on community feedback and structured the mapping based on them. It's important to note that we are opened for further suggestions and improvements.
+MongoDB stores data as JSON documents, while Neo4j stores data as graphs.  In order to enable graph-based querying of Mongo data, we need to determine how to map between these two different data structures.  Our initial goal was to implement a default mapping plan, covering the most well-known cases. We wanted to follow convention instead of requiring configuration. We collected some generic Mongo Document structures based on community feedback and structured the mapping based on them. It's important to note that we are opened for further suggestions and improvements.
 
 image::resources/images/doc_to_graph.png[]
 
-This project is based upon the link:https://github.com/10gen-labs/mongo-connector[Mongo Connector]. It provides a simple protocol to transfer data from MongoDB to another database. While Mongo publishes Doc Manager implementations for other databses, they did not provide an implementation for Neo4j.  You can grab more detailed information about **mongo-connector** into the official link:https://github.com/10gen-labs/mongo-connector/wiki[Project Wiki].
+This project is based upon the link:https://github.com/10gen-labs/mongo-connector[Mongo Connector]. It provides a simple protocol to transfer data from MongoDB to another database. While Mongo publishes Doc Manager implementations for other databases, they did not provide an implementation for Neo4j.  You can grab more detailed information about **mongo-connector** into the official link:https://github.com/10gen-labs/mongo-connector/wiki[Project Wiki].
 
 The Mongo Connector requires creating a MongoDB link:http://docs.mongodb.org/manual/tutorial/deploy-replica-set/[replica set]. An **OplogThread** thread then will listen to all CUD actions occurring in MongoDB. The **mongo-connector** provides an interface to collect the events caught by the OplogThread. The communication interface is implemented into a structure called **DocManager**, which can properly receive and handle Mongo documents and information about the database and its collections.
 
@@ -188,7 +188,12 @@ This will insert the following document into Mongo:
 
 This will be reflected as follows into Neo4j:
 
-image::resources/images/graph1.svg[]
+image::resources/images/neograph1.png[]
+
+Check the detailed generated graph:
+
+
+image::resources/images/graph1.png[]
 
 **Created nodes:** 
 
@@ -237,7 +242,7 @@ db.talks.insert(  { "session": { "title": "12 Years of Spring: An Open Source Jo
 
 In Neo4j, we will have:
 
-image::resources/images/graph2.svg[]
+image::resources/images/graph2.png[]
 
 
 **Created nodes:** 
@@ -283,7 +288,7 @@ db.talks.insert(  { "session": { "title": "12 Years of Spring: An Open Source Jo
 
 The above document will be translated into Neo4j as follows:
 
-image::resources/images/graph3.svg[]
+image::resources/images/graph3.png[]
 
 
 **Created nodes:**
@@ -337,7 +342,7 @@ db.people.insert({ "name": "Michael", "places_id": "32434ab234324", "url": "neo4
 
 Note that two documents were inserted, and *people* references *place* explicitly by *id*. __Neo4j Doc Manager__ will map every field that ends with ** \_id ** into an explicit relationship. First, we run a *MERGE* to see if the respective node exists. In the above example, we insert a _place_, and then a _people_. When inserting the _people_ type, the connector will identify an explicit _id_ relationship, through __places\_id__ , and will try to find the respective node. If it does exist (and it should), a relationship between the two nodes will be created.
 
-image::resources/images/graph4.svg[]
+image::resources/images/graph4.png[]
 
 
 **Created nodes:**
@@ -386,12 +391,12 @@ Compare both graphs:
 
 *Before the update*
 
-image::resources/images/graph1.svg[]
+image::resources/images/graph1.png[]
 
 
 *After the update*
 
-image::resources/images/graph5.svg[]
+image::resources/images/graph5.png[]
 
 
 Let's assume we have inserted another talk in Mongo:
@@ -401,7 +406,7 @@ Let's assume we have inserted another talk in Mongo:
 db.talks.insert(  { "session": { "title": "First steps with React", "abstract": "A little about React and how helpful it can be to your projects." }, "topics":  ["keynote", "javascript"], "room": "Auditorium2", "timeslot": "Wed 29th, 10:30-11:30", "speaker": { "name": "Peter Hunt", "bio": "Senior Developer.", "twitter": "https://twitter.com/react_developer", "picture": "http://www.reactiospeakers.org/wp-content/uploads/2015/09/peter-220x220.jpeg" } } );
 ----
 
-image::resources/images/graph6.svg[]
+image::resources/images/graph6.png[]
 
 
 Note that both talks should be held at _Auditorium2_. If we run the following command:
@@ -413,7 +418,7 @@ db.talks.update({ "room": "Auditorium2"}, { $set: { "room": "Auditorium"} })
 
 *Only the first document found by Mongo will be updated*, as shown on the image below.
 
-image::resources/images/graph7.svg[]
+image::resources/images/graph7.png[]
 
 If we want to change all documents, we must use _multi_ parameter, described in the following section.
 
@@ -426,7 +431,7 @@ db.talks.update({ "room": "Auditorium2"}, { $set: { "room": "Auditorium", "times
 
 We will have both properties, _room_ and _timeslot_, updated into the graph.
 
-image::resources/images/graph8.svg[]
+image::resources/images/graph8.png[]
 
 
 ===== $unset
@@ -442,12 +447,12 @@ Compare both graphs:
 
 *Before the update*
 
-image::resources/images/graph8.svg[]
+image::resources/images/graph8.png[]
 
 
 *After the update*
 
-image::resources/images/graph9.svg[]
+image::resources/images/graph9.png[]
 
 
 This instruction will get the first document in Mongo that matches with the specified criteria and generate an update method call into _Neo4j Doc Manager_. Considering we have a document previously inserted into Mongo by the Upsert example, we will have a single update, removing the property (notice on the node on the left side of the image).
@@ -467,12 +472,12 @@ db.talks.update({ "room": "Auditorium"}, { $unset: { "room": "", "timeslot": "" 
 
 We will have both properties, _room_ and _timeslot_, removed of the node into the graph.
 
-image::resources/images/graph10.svg[]
+image::resources/images/graph10.png[]
 
 
 __$unset__ can also remove connected nodes and relationships. Assuming our default __talks__ example:
 
-image::resources/images/graph1.svg[]
+image::resources/images/graph1.png[]
 
 
 If we run:
@@ -484,14 +489,14 @@ db.talks.update({ room: "Auditorium" }, { $unset: { session:""  } });
 
 In Neo4j it will cause a removal of the node with the label __session__ for the room with the property __Auditorium__ and also the removal os the relationship connecting __talks__ and __session__.
 
-image::resources/images/graph11.svg[]
+image::resources/images/graph11.png[]
 
 
 ===== Updating without $set or $unset (document replacement)
 
 It is also possible to update a document by specifying the entire change desired on it. For example, imagine we have inserted the _talks_ previously described into _Upsert_ section.
 
-image::resources/images/graph1.svg[]
+image::resources/images/graph1.png[]
 
 
 Now we want to update the document to select the one whose __room__ will be __Auditorium__ and clear all the root data and have only a property called __level__, which value will be __intermediate__. We have to run the following instruction:
@@ -504,7 +509,7 @@ db.talks.update({ room: "Auditorium" }, { level: "Intermediate"  } );
 
 This instruction will get the first document in Mongo that matches with the specified criteria and generate an update method call into _Neo4j Doc Manager_. Considering we have a document previously inserted into Mongo by the Upsert example, we will have a single update.
 
-image::resources/images/graph12.svg[]
+image::resources/images/graph12.png[]
 
 
 **Updated Nodes**
@@ -519,7 +524,7 @@ Attention: Calling an update clause without __$set__ or __$unset__ will lead to 
 
 It is also possible to run an update clause that contains a nested document as an argument. Imagine our default __talks__ example:
 
-image::resources/images/graph1.svg[]
+image::resources/images/graph1.png[]
 
 Then we run:
 
@@ -530,7 +535,7 @@ db.talks.update({ room: "Auditorium" },  { conference: { name: "GraphConnect", c
 
 This instruction will remove all the properties from the __talks__ node (but it will still being the root node). A new node, with the label __conference__, will be created. Also, a relationship between __talks__ and __conference__ will be made:
 
-image::resources/images/graph13.svg[]
+image::resources/images/graph13.png[]
 
 
 **Updated Nodes**
@@ -551,7 +556,7 @@ db.talks.update({ room: "Auditorium" },  { conference: { name: "GraphConnect", c
 
 This instruction will remove all the properties from the __talks__ node (but it will still being the root node). It will also create a **level** property on __talks__, with **intermediate** value. A new node, with the label __conference__, will be created. Also, a relationship between __talks__ and __conference__ will be made:
 
-image::resources/images/graph14.svg[]
+image::resources/images/graph14.png[]
 
 
 **Updated Nodes**
@@ -576,11 +581,11 @@ _multi: true_ will update all documents that match the specified clauses. This b
 
 Before the update:
 
-image::resources/images/graph15.svg[]
+image::resources/images/graph15.png[]
 
 After the update:
 
-image::resources/images/graph16.svg[]
+image::resources/images/graph16.png[]
 
 **Nodes**
 
@@ -605,7 +610,7 @@ db.talks.update({ "room": "Auditorium"}, { $set: { "level": "intermediate"} }, {
 
 After running the update clause, we have:
 
-image::resources/images/graph17.svg[]
+image::resources/images/graph17.png[]
 
 
 * The same two nodes labelled as *Document:talks*, now with a _level_ property, containing _"intermediate"_ as its value.
@@ -616,7 +621,7 @@ image::resources/images/graph17.svg[]
 
 Let's assume the graph below:
 
-image::resources/images/graph1.svg[]
+image::resources/images/graph1.png[]
 
 
 If the update clause does not match any document, by default a new document is not created. However, if you pass the parameter _{upsert: true}_, a new document is created. For example, assume we run the following clause:
@@ -629,7 +634,7 @@ db.talks.update({ "room": "Auditorium4"}, { $set: { "session": { "title": "Intro
 
 At the moment we do not have any document that matches with _room_ _Auditorium4_. If we do not specify anything, nothing is done to Mongo or Neo4j and we end up with a graph identical to the initial one:
 
-image::resources/images/graph1.svg[]
+image::resources/images/graph1.png[]
 
 
 However, if we specify the _upsert_ as a _true_ parameter,
@@ -641,7 +646,7 @@ db.talks.update({ "room": "Auditorium4"}, { $set: { "session": { "title": "Intro
 
 A new document will be inserted into Mongo and a new group of nodes and relationships will be inserted into Neo4j. SO, after running the above query, we will have:
 
-image::resources/images/graph18.svg[]
+image::resources/images/graph18.png[]
 
 
 **Update nodes**
@@ -680,7 +685,7 @@ We can also invoke an update action that contains a nested Document. For example
 
 At Neo4j, we have:
 
-image::resources/images/graph1.svg[]
+image::resources/images/graph1.png[]
 
 
 **Nodes:** 
@@ -732,7 +737,7 @@ This will cause the following update in Mongo:
 
 Note that the nested document __conference__ has been inserted. This will be translated as a new node and a new relationship into Neo4j:
 
-image::resources/images/graph19.svg[]
+image::resources/images/graph19.png[]
 
 
 **Created by update action Nodes:** 
@@ -752,7 +757,7 @@ db.talks.remove({})
 ```
 So let's imagine that we had **two** nodes on talks, previously inserted. Each node has relationships and connected nodes:
 
-image::resources/images/graph15.svg[]
+image::resources/images/graph15.png[]
 
 
 * _Document:talks_ - talks is the root node, coming from Mongo Document Collection, with an id that also comes from MongoDB. Non nested Documents are converted into regular properties, such as "room", "topics" and "timeslot" (a common String array).
@@ -780,12 +785,12 @@ This will remove a single document with **room** marked as **Auditorium**.
 
 Before the update:
 
-image::resources/images/graph15.svg[]
+image::resources/images/graph15.png[]
 
 
 After the update:
 
-image::resources/images/graph20.svg[]
+image::resources/images/graph20.png[]
 
 
 The translation will be held the same way for Neo4j - The corresponding **Document::talks** node will be removed with all his nested information.
