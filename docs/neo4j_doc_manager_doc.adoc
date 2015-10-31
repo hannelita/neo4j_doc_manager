@@ -200,6 +200,8 @@ image::https://raw.githubusercontent.com/neo4j-contrib/neo4j_doc_manager/master/
 * _Document:session_ - Nested Document. Inner key/values are converted into Node properties. Note that the id incoming from root *talks* collection is propagated to this Node. Also, note that this node is labelled as its direct document key, in this case, *session*.
 * _Document:speaker_ - also nested Document.
 
+Also, for every created node, a property names **_ts**, representing the timestamp of the creation in MongoBD, is added to the node.
+
 **Created Relationships:**
 
 * A relationship that connects *talks* and *session* nodes, called **talks_session**,
@@ -250,6 +252,8 @@ image::https://raw.githubusercontent.com/neo4j-contrib/neo4j_doc_manager/master/
 * _Document:session_ - Nested Document. Inner key/values are converted into Node properties. Note that the id incoming from root *talks* collection is propagated to this Node. Also, note that this node is labelled as its direct document key, in this case, *session*.
 * _Document:speaker_ - also nested Document.
 * _Document:conference_ - a Node that is nested to _session_.
+
+Also, for every created node, a property names **_ts**, representing the timestamp of the creation in MongoBD, is added to the node.
 
 **Created Relationships:**
 
@@ -990,6 +994,24 @@ If something bad happens during the import, Neo4j Doc Manager should not stop. A
 mongo-connector -v -m localhost:27017 -t http://localhost:7474/db/data -d neo4j_doc_manager
 ```
 
-This activates __verbose__ level. You can have a better explanation about what are the failure points by seraching for __OperationFailed__ on __mongo-connector.log__ file.
+This activates __verbose__ level. You can have a better explanation about what are the failure points by searching for __OperationFailed__ on __mongo-connector.log__ file.
+
+=== Running the tests
+
+If you are willing to contribute with this project (we hope you are!), then you may need to run the tests locally. To do so, you must:
+
+* install **mongo-orchestration** link:https://github.com/10gen/mongo-orchestration[repo], by running **pip install mongo-orchestration**
+* stop any MongoDB instances you might have running.
+* Also stop Mongo Shell.
+
+Move to your project directory and start **mongo-orchestration** by running **mongo-orchestration start**. Then simply run the tests with **python -m unittest discover**.
+
+Just be sure that the ports __27017__ and __27018__ are not being used. You can verify it with the command __lsof__ :
+
+```
+sudo lsof -i :27017
+sudo lsof -i :27018
+```
+A MongoDB server mock will need these ports. 
 
 
