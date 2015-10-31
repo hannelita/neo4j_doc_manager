@@ -293,11 +293,6 @@ class Neo4jTestCase(unittest.TestCase):
       self.assertIsNot(n["main-title"], "simple title")
     self.tearDown
 
-  @unittest.skip("Not implmented yet")
-  def test_bulk_upsert(self):
-    self.docman.update(doc_id, 'test.talks', 1)
-    self.assertEqual(self.graph.size, 0)
-    self.tearDown
 
   def test_remove(self):
     docc = simple_doc
@@ -307,9 +302,29 @@ class Neo4jTestCase(unittest.TestCase):
     self.assertEqual(self.graph.size, 0)
     self.tearDown
 
-  @unittest.skip("Not implmented yet")
   def test_search(self):
-    return
+    """Test the search method.
+    Make sure we can retrieve documents last modified within a time range.
+    """
+    docc = {'_id': '1', 'name': 'John'}
+    self.docman.upsert(docc, 'test.search', 5767301236327972865)
+    docc2 = {'_id': '2', 'name': 'John Paul'}
+    self.docman.upsert(docc2, 'test.search', 5767301236327972866)
+    docc3 = {'_id': '3', 'name': 'Paul'}
+    self.docman.upsert(docc3, 'test.search', 5767301236327972870)
+    search = list(self.docman.search(5767301236327972865,
+                                          5767301236327972866))
+    self.assertEqual(len(search), 2)
+    for result in search:
+      result_ids = [result[0]["_id"] for result in search]
+    self.assertIn('1', result_ids)
+    self.assertIn('2', result_ids)
+
+  @unittest.skip("Not implmented yet")
+  def test_get_last_doc(self):
+    """Test the get_last_doc method.
+    Make sure we can retrieve the document most recently modified from ES.
+    """
 
   @unittest.skip("Not implmented yet")
   def test_commands(self):

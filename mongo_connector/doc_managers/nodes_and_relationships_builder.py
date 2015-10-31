@@ -8,10 +8,11 @@ import logging
 LOG = logging.getLogger(__name__)
 
 class NodesAndRelationshipsBuilder(object):
-  def __init__(self, doc, doc_type, doc_id, doc_types=[]):
+  def __init__(self, doc, doc_type, doc_id, metadata={}, doc_types=[]):
     self.doc_id = doc_id
     self.query_nodes = {}
     self.relationships_query = {}
+    self.metadata = metadata or {}
     self.doc_types = doc_types or []
     self.explicit_ids = {}
     self.build_nodes_query(doc_type, doc, doc_id)
@@ -19,6 +20,8 @@ class NodesAndRelationshipsBuilder(object):
   def build_nodes_query(self, doc_type, document, id):
     self.doc_types.append(doc_type)
     parameters = {'_id':id}
+    if self.is_dict(self.metadata):
+      parameters.update(self.metadata) 
     for key in document.keys():
       if self.is_reference(key):
         self.build_node_with_reference(doc_type, key, id, document[key])
