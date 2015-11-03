@@ -169,6 +169,8 @@ class Neo4jTestCase(unittest.TestCase):
     self.assertEqual("Juergen Hoeller", inner)
     inner = self.graph.find_one("session")['title']
     self.assertEqual("12 Years of Spring: An Open Source Journey", inner)
+    ts = self.graph.find_one("talksone")['_ts']
+    self.assertIsNot(ts, None)
     self.tearDown()
 
   def test_upsert_double_nested(self):
