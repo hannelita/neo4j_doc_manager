@@ -59,9 +59,9 @@ class DocManager(DocManagerBase):
     """Inserts a document into Neo4j."""
     index, doc_type = self._index_and_mapping(namespace)
     doc_id = u(doc.pop("_id"))
-    metadata = { "ns": namespace, "_ts": timestamp }
+    metadata = { "_ts": timestamp }
     doc = self._formatter.format_document(doc)
-    builder = NodesAndRelationshipsBuilder(doc, doc_type, doc_id)
+    builder = NodesAndRelationshipsBuilder(doc, doc_type, doc_id, metadata)
     self.apply_id_constraint(builder.doc_types)
     tx = self.graph.cypher.begin()
     for statement in builder.query_nodes.keys():
@@ -74,13 +74,13 @@ class DocManager(DocManagerBase):
   def bulk_upsert(self, docs, namespace, timestamp):
     """Insert multiple documents into Neo4j."""
     """Maximum chunk size is 1000. Transaction blocks won't have more than 1000 statements."""
-    metadata = { "ns": namespace, "_ts": timestamp }
+    metadata = { "_ts": timestamp }
     tx = self.graph.cypher.begin()
     for doc in docs:
       index, doc_type = self._index_and_mapping(namespace)
       doc_id = u(doc.pop("_id"))
       doc = self._formatter.format_document(doc)
-      builder = NodesAndRelationshipsBuilder(doc, doc_type, doc_id)
+      builder = NodesAndRelationshipsBuilder(doc, doc_type, doc_id, metadata)
       self.apply_id_constraint(builder.doc_types)
       for statement in builder.query_nodes.keys():
         tx.append(statement, builder.query_nodes[statement])
@@ -111,15 +111,25 @@ class DocManager(DocManagerBase):
     tx.append(statement, params_dict)
     tx.commit()
 
+  @wrap_exceptions
   def search(self, start_ts, end_ts):
-    LOG.error("Search")
+    statement = "MATCH (d:Document) WHERE d._ts>={start_ts} AND d._ts<={end_ts} RETURN d".format(start_ts=start_ts, end_ts=end_ts)
+    results = self.graph.cypher.execute(statement)
+    return results
+
 
   def commit(self):
     LOG.error("Commit")
     
 
+  @wrap_exceptions
   def get_last_doc(self):
-    LOG.error("get last doc")
+    """Get the most recently modified node from Neo4j.
+    This method is used to help define a time window within which documents
+    may be in conflict after a MongoDB rollback.
+    """
+    LOG.error("Commit")    
+
     
   def handle_command(self, doc, namespace, timestamp):
     db = namespace.split('.', 1)[0]

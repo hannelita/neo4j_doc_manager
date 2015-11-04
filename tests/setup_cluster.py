@@ -136,14 +136,14 @@ class ReplicaSet(MCTestObject):
         }
 
     def _init_from_response(self, response):
-      self.id = response['id']
-      self.uri = response.get('mongodb_auth_uri', response['mongodb_uri'])
-      for member in response['members']:
-        if member['state'] == 1:
-            self.primary = Server(member['server_id'], member['host'])
-        elif member['state'] == 2:
-            self.secondary = Server(member['server_id'], member['host'])
-      return self
+        self.id = response['id']
+        self.uri = response.get('mongodb_auth_uri', response['mongodb_uri'])
+        for member in response['members']:
+          if member['state'] == 1:
+              self.primary = Server(member['server_id'], member['host'])
+          elif member['state'] == 2:
+              self.secondary = Server(member['server_id'], member['host'])
+        return self
 
     def start(self):
         # We never need to restart a replica set, only start new ones.

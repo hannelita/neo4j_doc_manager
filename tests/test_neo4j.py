@@ -166,54 +166,52 @@ class TestNeo4j(Neo4jTestCase):
       self.assertNotIn('nan', doc)
       self.assertTrue(doc['still_exists'])
       
-    # def test_rollback(self):
-    #   """Test behavior during a MongoDB rollback.
-    #   We force a rollback by adding a doc, killing the primary,
-    #   adding another doc, killing the new primary, and then
-    #   restarting both.
-    #   """
-    #   primary_conn = self.repl_set.primary.client()
+    def test_rollback(self):
+      """Test behavior during a MongoDB rollback.
+      We force a rollback by adding a doc, killing the primary,
+      adding another doc, killing the new primary, and then
+      restarting both.
+      """
+      primary_conn = self.repl_set.primary.client()
 
-    #   self.conn['test']['test'].insert({'name': 'paul'})
-    #   result_set = self.conn['test']['test'].find_one()
-    #   condition1 = lambda: self.conn['test']['test'].find(
-    #       {'name': 'paul'}).count() == 1
-    #   condition2 = lambda: self._count() == 1
-    #   assert_soon(condition1)
-    #   assert_soon(condition2)
+      self.conn['test']['rollback'].insert({'name': 'paul'})
+      result_set = self.conn['test']['rollback'].find_one()
+      self.connector.doc_managers[0].upsert({'_id': str(result_set['_id']),'name': 'paul'}, "test.rollback", 1)
+      condition1 = lambda: self.conn['test']['rollback'].find(
+          {'name': 'paul'}).count() == 1
+      assert_soon(condition1)
 
-    #   self.repl_set.primary.stop(destroy=False)
+      self.repl_set.primary.stop(destroy=False)
 
-    #   new_primary_conn = self.repl_set.secondary.client()
+      new_primary_conn = self.repl_set.secondary.client()
 
-    #   admin = new_primary_conn['admin']
-    #   assert_soon(lambda: admin.command("isMaster")['ismaster'])
-    #   time.sleep(5)
-    #   retry_until_ok(self.conn.test.test.insert, {'name': 'pauline'})
-    #   assert_soon(lambda: self._count() == 2)
-    #   result_set_1 = self.neo4j_conn.find_one("test")
-    #   result_set_2 = self.conn['test']['test'].find_one({'name': 'pauline'})
-      # self.assertEqual(len(result_set_1), 2)
+      admin = new_primary_conn['admin']
+      assert_soon(lambda: admin.command("isMaster")['ismaster'])
+      time.sleep(5)
+      retry_until_ok(self.conn.test.rollback.insert, {'name': 'pauline'})
+      assert_soon(lambda: self._count() > 0)
+      result_set_2 = self.conn['test']['rollback'].find_one({'name': 'pauline'})
+      self.connector.doc_managers[0].upsert({'_id': str(result_set_2['_id']),'name': 'pauline'}, "test.rollback", 1)
+      result_set_1 = self.neo4j_conn.find_one("rollback", "name", "pauline")
+      self.assertNotEqual(result_set_1, None)
       #make sure pauline is there
-      # for item in result_set_1:
-      #     if item['name'] == 'pauline':
-      #         self.assertEqual(item['_id'], str(result_set_2['_id']))
-      # self.repl_set.secondary.stop(destroy=False)
+      if result_set_1['name'] == 'pauline':
+        self.assertEqual(result_set_1['_id'], str(result_set_2['_id']))
+      self.repl_set.secondary.stop(destroy=False)
 
-      # self.repl_set.primary.start()
-      # while primary_conn['admin'].command("isMaster")['ismaster'] is False:
-      #     time.sleep(1)
+      self.repl_set.primary.start()
+      while primary_conn['admin'].command("isMaster")['ismaster'] is False:
+        time.sleep(1)
 
-      # self.repl_set.secondary.start()
+      self.repl_set.secondary.start()
 
-      # time.sleep(2)
-      # result_set_1 = list(self._search())
-      # self.assertEqual(len(result_set_1), 1)
-
-      # for item in result_set_1:
-      #     self.assertEqual(item['name'], 'paul')
-      # find_cursor = retry_until_ok(self.conn['test']['test'].find)
-      # self.assertEqual(retry_until_ok(find_cursor.count), 1)
+      time.sleep(2)
+      node = self.neo4j_conn.find_one("rollback")
+      self.assertEqual(node['name'], 'paul')
+      node = self.neo4j_conn.find_one("rollback", "name", "pauline")
+      self.assertNotEqual(node, None)
+      find_cursor = retry_until_ok(self.conn['test']['rollback'].find)
+      self.assertEqual(retry_until_ok(find_cursor.count), 1)
 
 
 if __name__ == '__main__':
