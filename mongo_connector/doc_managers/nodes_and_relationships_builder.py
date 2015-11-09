@@ -1,9 +1,13 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*- 
 """
 Class that builds Nodes and Relationships
 according to a Mongo document.
 """
 import re
 import logging
+import codecs
+from mongo_connector.compat import u
 
 LOG = logging.getLogger(__name__)
 
@@ -33,14 +37,14 @@ class NodesAndRelationshipsBuilder(object):
         self.build_nodes_query(key, document[key], id)
       elif self.is_json_array(document[key]):
         for json in self.format_params(document[key]):
-          json_key = key + str(document[key].index(json))
+          json_key = json_key = key + str(document[key].index(json))
           self.build_relationships_query(doc_type, json_key, id, id)
           self.build_nodes_query(json_key, json, id)
       elif self.is_multimensional_array(document[key]):
         parameters.update(self.flatenned_property(key, document[key]))
       else:
         parameters.update({ key: self.format_params(document[key]) })
-    query = "CREATE (c:Document:`{doc_type}` {{parameters}})".format(doc_type=doc_type)
+    query = "CREATE (c:Document:`%(doc_type)s` {parameters})" % locals()
     self.query_nodes.update({query: {"parameters":parameters}})
 
   def format_params(self, params):
@@ -53,7 +57,7 @@ class NodesAndRelationshipsBuilder(object):
       return
     doc_type = key.split("_id")[0]
     parameters = {'_id':document_key}
-    statement = "MERGE (d:Document:`{doc_type}` {{ _id: {{parameters}}._id}})".format(doc_type=doc_type)
+    statement = "MERGE (d:Document:`%(doc_type)s` { _id: {parameters}._id})" % locals()
     self.query_nodes.update({statement: {"parameters":parameters}})
     self.build_relationships_query(root_type, doc_type, doc_id, document_key)
     self.explicit_ids.update({document_key: doc_type})
@@ -86,7 +90,7 @@ class NodesAndRelationshipsBuilder(object):
 
 
   def build_relationships_query(self, main_type, node_type, doc_id, explicit_id):
-    relationship_type = main_type + "_" + node_type
-    statement = "MATCH (a:`{main_type}`), (b:`{node_type}`) WHERE a._id={{doc_id}} AND b._id ={{explicit_id}} CREATE (a)-[r:`{relationship_type}`]->(b)".format(main_type=main_type, node_type=node_type, relationship_type=relationship_type)
+    relationship_type = (main_type + "_" + node_type).encode("utf-8")
+    statement = "MATCH (a:`%(main_type)s`), (b:`%(node_type)s`) WHERE a._id={doc_id} AND b._id ={explicit_id} CREATE (a)-[r:`%(relationship_type)s`]->(b)" % locals()
     params = {"doc_id": doc_id, "explicit_id": explicit_id}
     self.relationships_query.update({statement: params})

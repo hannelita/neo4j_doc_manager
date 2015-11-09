@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*- 
 """
 Neo4j implementation for the DocManager. Receives documents and 
 communicates with Neo4j Server.
@@ -47,7 +49,7 @@ class DocManager(DocManagerBase):
 
   def apply_id_constraint(self, doc_types):
     for doc_type in doc_types:
-      constraint = "CREATE CONSTRAINT ON (d:`{doc_type}`) ASSERT d._id IS UNIQUE".format(doc_type=doc_type)
+      constraint = "CREATE CONSTRAINT ON (d:`%(doc_type)s`) ASSERT d._id IS UNIQUE" % locals()
       self.graph.cypher.execute(constraint)
 
   def stop(self):
@@ -113,7 +115,7 @@ class DocManager(DocManagerBase):
 
   @wrap_exceptions
   def search(self, start_ts, end_ts):
-    statement = "MATCH (d:Document) WHERE d._ts>={start_ts} AND d._ts<={end_ts} RETURN d".format(start_ts=start_ts, end_ts=end_ts)
+    statement = "MATCH (d:Document) WHERE d._ts>=%(start_ts)s AND d._ts<=%(end_ts)s RETURN d" % locals()
     results = self.graph.cypher.execute(statement)
     return results
 
