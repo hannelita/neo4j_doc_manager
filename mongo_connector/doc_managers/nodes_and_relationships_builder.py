@@ -90,7 +90,7 @@ class NodesAndRelationshipsBuilder(object):
 
 
   def build_relationships_query(self, main_type, node_type, doc_id, explicit_id):
-    relationship_type = (main_type + "_" + node_type).encode("utf-8")
+    relationship_type = main_type + "_" + node_type
     statement = "MATCH (a:`%(main_type)s`), (b:`%(node_type)s`) WHERE a._id={doc_id} AND b._id ={explicit_id} CREATE (a)-[r:`%(relationship_type)s`]->(b)" % locals()
     params = {"doc_id": doc_id, "explicit_id": explicit_id}
     self.relationships_query.update({statement: params})
